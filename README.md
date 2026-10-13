@@ -30,9 +30,9 @@ API مدیریت سفارش‌های یک فروشگاه آنلاین با **Cle
 ```
 Domain (مرکز، بدون وابستگی)
   ← Application (فقط به Domain)
-      ← Infrastructure (به Domain و Application)
-          ← Api (به Application و Infrastructure)
-                ↖ Application.Tests (به Application و Domain)
+      ← Infrastructure (Application)
+          ← Api (Infrastructure)
+                ↖ Application.Tests (به Application)
 ```
 
 - **Domain:** انتیتی‌ها (Customer، Product، Order، OrderItem، ApplicationUser، RefreshToken)،
