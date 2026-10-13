@@ -59,6 +59,11 @@ public sealed class JwtTokenService : ITokenService
             : DefaultAccessTokenMinutes;
     }
 
+    /// <summary>
+    /// طول عمر توکن دسترسی بر حسب دقیقه (همان <c>Jwt:AccessTokenMinutes</c> یا ۱۵ دقیقه پیش‌فرض).
+    /// </summary>
+    public int AccessTokenLifetimeMinutes => _accessTokenMinutes;
+
     /// <inheritdoc />
     public string GenerateAccessToken(ApplicationUser user)
     {
@@ -106,30 +111,5 @@ public sealed class JwtTokenService : ITokenService
         // با اینکه خودِ توکن آنتروپی بالایی دارد.
         byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         return Convert.ToHexString(hash);
-    }
-
-    /// <inheritdoc />
-    /// <exception cref="SecurityTokenException">وقتی امضا، issuer یا audience نامعتبر باشد پرتاب می‌شود.</exception>
-    public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(token);
-
-        var parameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = _issuer,
-            ValidateAudience = true,
-            ValidAudience = _audience,
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key)),
-            // نکته‌ی اصلی refresh: یک توکن دسترسی منقضی‌شده باید همچنان قابل خواندن باشد،
-            // اما فقط امضای آن ثابت می‌کند که واقعاً توسط همین سرور صادر شده است.
-            ValidateLifetime = false,
-            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
-            ClockSkew = TimeSpan.Zero
-        };
-
-        var handler = new JwtSecurityTokenHandler();
-        return handler.ValidateToken(token, parameters, out _);
     }
 }

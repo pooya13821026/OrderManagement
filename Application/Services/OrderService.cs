@@ -173,6 +173,8 @@ public class OrderService : IOrderService
             for (int index = 0; index < request.Orders.Count; index++)
             {
                 CreateOrderRequest orderRequest = request.Orders[index];
+                // بیرون از try نگه داشته می‌شود تا در صورت شکست بتوان آن را از ترکر جدا کرد.
+                Order? pendingOrder = null;
                 try
                 {
                     if (!customersById.TryGetValue(orderRequest.CustomerId, out Customer? customer))
@@ -182,9 +184,9 @@ public class OrderService : IOrderService
                     }
 
                     string orderNumber = await GenerateUniqueOrderNumberAsync(cancellationToken);
-                    Order order = BuildOrder(orderRequest, orderNumber, customer, productsById);
+                    pendingOrder = BuildOrder(orderRequest, orderNumber, customer, productsById);
 
-                    await _unitOfWork.Orders.AddAsync(order, cancellationToken);
+                    await _unitOfWork.Orders.AddAsync(pendingOrder, cancellationToken);
                     // ذخیره‌سازی per order داخل تراکنش مشترک تا هر سفارش ایجادشده
                     // شناسه‌اش را بگیرد و در عین حال کل دسته به‌صورت اتمیک commit شود.
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -193,13 +195,27 @@ public class OrderService : IOrderService
                     {
                         Index = index,
                         Success = true,
-                        OrderId = order.Id,
-                        OrderNumber = order.OrderNumber
+                        OrderId = pendingOrder.Id,
+                        OrderNumber = pendingOrder.OrderNumber
                     });
                     successfulCount++;
                 }
                 catch (Exception exception)
                 {
+                    // سفارش ناموفق و ردیف‌هایش ممکن است با وضعیت Added در ترکر مانده باشند؛
+                    // اگر جدا نشوند، SaveChanges بعدی دوباره درج آن‌ها را امتحان می‌کند و کل
+                    // دسته را مسموم می‌کند. حذف موجودیت تازه‌وارد (Added) آن را Detached
+                    // می‌کند، پس اول ردیف‌ها و بعد خود سفارش جدا می‌شوند.
+                    if (pendingOrder is not null)
+                    {
+                        foreach (OrderItem pendingItem in pendingOrder.Items)
+                        {
+                            _unitOfWork.OrderItems.Remove(pendingItem);
+                        }
+
+                        _unitOfWork.Orders.Remove(pendingOrder);
+                    }
+
                     // پردازش سفارش‌های باقی‌مانده ادامه می‌یابد؛ شکست یک سفارش
                     // نباید نتایج سفارش‌های خواهر و برادرش را دور بریزد.
                     results.Add(new BulkOrderResultItem

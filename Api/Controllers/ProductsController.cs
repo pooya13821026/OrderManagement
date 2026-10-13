@@ -132,9 +132,39 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// یک محصول را حذف می‌کند. فقط مدیران.
+    /// موجودی یک محصول را تنظیم می‌کند (شارژ با عدد مثبت، برداشت با عدد منفی).
+    /// فقط مدیران. برداشت بیش از موجودی رد می‌شود.
     /// </summary>
     /// <param name="id">شناسه محصول.</param>
+    /// <param name="request">بدنه درخواست تنظیم موجودی.</param>
+    /// <param name="cancellationToken">توکن لغو عملیات.</param>
+    /// <returns>محصول با موجودی به‌روزشده.</returns>
+    /// <response code="200">موجودی تنظیم شد.</response>
+    /// <response code="400">مقدار تغییر صفر است یا موجودی کافی نیست.</response>
+    /// <response code="401">توکن دسترسی معتبر ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
+    /// <response code="404">محصولی با این شناسه وجود ندارد.</response>
+    /// <response code="409">موجودی برای برداشت درخواستی کافی نیست.</response>
+    [HttpPatch("{id:guid}/stock")]
+    [Authorize(Roles = Roles.Admin)]
+    [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ProductDto>> AdjustStock(
+        Guid id,
+        [FromBody] AdjustStockRequest request,
+        CancellationToken cancellationToken)
+    {
+        ProductDto updated = await _productService.AdjustStockAsync(id, request.QuantityChange, cancellationToken);
+        return Ok(updated);
+    }
+
+    /// <summary>
+    /// یک محصول را حذف می‌کند. فقط مدیران.
+    /// </summary>    /// <param name="id">شناسه محصول.</param>
     /// <param name="cancellationToken">توکن لغو عملیات.</param>
     /// <returns>در صورت موفقیت بدون بدنه.</returns>
     /// <response code="204">محصول حذف شد.</response>

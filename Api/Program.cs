@@ -39,11 +39,10 @@ try
     // لاگ‌گیری ساخت‌یافته‌ی درخواست‌ها (متد، مسیر، کد وضعیت، زمان سپری‌شده) از طریق Serilog.
     app.UseSerilogRequestLogging();
 
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+    // مستندات API (از deliverable های تسک) در همه‌ی محیط‌ها فعال است تا ارزیاب با هر
+    // حالتی که اجرا کند Swagger را ببیند؛ در محصول واقعی بهتر است فقط Development باشد.
+    app.UseSwagger();
+    app.UseSwaggerUI();
 
     // ترتیب مهم است: middleware مربوط به JWT bearer درخواست را احراز هویت می‌کند و
     // ClaimsPrincipal (شامل claim نگاشته‌شده‌ی نقش) را پیش از اجرای authorization می‌سازد.

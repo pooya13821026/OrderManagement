@@ -159,7 +159,7 @@ public class AuthService : IAuthService
         {
             AccessToken = _tokenService.GenerateAccessToken(user),
             RefreshToken = newRawToken,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_tokenService.AccessTokenLifetimeMinutes),
             User = user.ToDto()
         };
     }
@@ -217,7 +217,7 @@ public class AuthService : IAuthService
         {
             AccessToken = _tokenService.GenerateAccessToken(user),
             RefreshToken = rawRefreshToken,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_tokenService.AccessTokenLifetimeMinutes),
             User = user.ToDto()
         };
     }

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using OrderManagement.Domain.Entities;
 
 namespace OrderManagement.Application.Interfaces;
@@ -9,6 +8,13 @@ namespace OrderManagement.Application.Interfaces;
 /// </summary>
 public interface ITokenService
 {
+    /// <summary>
+    /// طول عمر توکن دسترسی بر حسب دقیقه را برمی‌گرداند (همان مقداری که هنگام صدور
+    /// داخل خود توکن می‌نشیند). سرویس احراز هویت از آن برای فیلد <c>ExpiresAt</c>
+    /// پاسخ استفاده می‌کند تا ساعت اعلام‌شده با ساعت واقعی توکن یکی باشد.
+    /// </summary>
+    int AccessTokenLifetimeMinutes { get; }
+
     /// <summary>
     /// توکن دسترسی JWT امضاشده‌ای برای کاربر داده‌شده تولید می‌کند.
     /// </summary>
@@ -28,13 +34,4 @@ public interface ITokenService
     /// <param name="token">توکن refresh خام.</param>
     /// <returns>هش توکن.</returns>
     string HashRefreshToken(string token);
-
-    /// <summary>
-    /// <see cref="ClaimsPrincipal"/> را از یک توکن دسترسی منقضی‌شده می‌سازد
-    /// بدون اعتبارسنجی طول عمر آن، تا بتوان از آن برای پیدا کردن
-    /// کاربر هنگام refresh استفاده کرد.
-    /// </summary>
-    /// <param name="token">توکن دسترسی منقضی‌شده.</param>
-    /// <returns><c>ClaimsPrincipal</c> استخراج‌شده از توکن.</returns>
-    ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
 }
