@@ -1,24 +1,24 @@
 namespace OrderManagement.Domain.Exceptions;
 
 /// <summary>
-/// Base exception for all business rule violations raised by the domain or application layers.
+/// استثنای پایه برای همه‌ی نقض‌های قواعد کسب‌وکار که توسط لایه‌ی دامنه یا برنامه پرتاب می‌شوند.
 /// </summary>
 public class DomainException : Exception
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="DomainException"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="DomainException"/> می‌سازد.
     /// </summary>
-    /// <param name="message">The message that describes the error.</param>
+    /// <param name="message">پیامی که خطا را توصیف می‌کند.</param>
     public DomainException(string message)
         : base(message)
     {
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="DomainException"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="DomainException"/> می‌سازد.
     /// </summary>
-    /// <param name="message">The message that describes the error.</param>
-    /// <param name="innerException">The exception that caused this exception.</param>
+    /// <param name="message">پیامی که خطا را توصیف می‌کند.</param>
+    /// <param name="innerException">استثنایی که باعث این استثنا شده است.</param>
     public DomainException(string message, Exception innerException)
         : base(message, innerException)
     {

@@ -1,32 +1,32 @@
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Outcome of a single order inside a bulk creation request.
+/// سرنوشت یک سفارش واحد درون یک درخواست ایجاد گروهی.
 /// </summary>
 public class BulkOrderResultItem
 {
     /// <summary>
-    /// Gets or sets the zero-based index of the order in the submitted request list.
+    /// اندیس مبتنی بر صفر سفارش در فهرست درخواست ارسالی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public int Index { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether this order was created successfully.
+    /// مقداری که نشان می‌دهد این سفارش با موفقیت ایجاد شد را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public bool Success { get; set; }
 
     /// <summary>
-    /// Gets or sets the identifier of the created order, or <c>null</c> when creation failed.
+    /// شناسه‌ی سفارش ایجادشده، یا <c>null</c> در صورت شکست ایجاد را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid? OrderId { get; set; }
 
     /// <summary>
-    /// Gets or sets the order number of the created order, or <c>null</c> when creation failed.
+    /// شماره‌ی سفارش ایجادشده، یا <c>null</c> در صورت شکست ایجاد را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? OrderNumber { get; set; }
 
     /// <summary>
-    /// Gets or sets the error message when creation failed, or <c>null</c> on success.
+    /// پیام خطا در صورت شکست ایجاد، یا <c>null</c> در صورت موفقیت را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? ErrorMessage { get; set; }
 }

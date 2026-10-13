@@ -1,29 +1,29 @@
 namespace OrderManagement.Domain.Exceptions;
 
 /// <summary>
-/// Thrown when an entity with a given identifier does not exist.
+/// هنگامی پرتاب می‌شود که موجودیتی با شناسه‌ی داده‌شده وجود نداشته باشد.
 /// </summary>
 public class EntityNotFoundException : DomainException
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="EntityNotFoundException"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="EntityNotFoundException"/> می‌سازد.
     /// </summary>
-    /// <param name="entityName">Simple name of the entity type, for example <c>Order</c>.</param>
-    /// <param name="id">The identifier that could not be found.</param>
+    /// <param name="entityName">نام ساده‌ی نوع موجودیت، برای نمونه <c>Order</c>.</param>
+    /// <param name="id">شناسه‌ای که پیدا نشد.</param>
     public EntityNotFoundException(string entityName, object id)
-        : base($"{entityName} with id '{id}' was not found.")
+        : base($"رکورد {entityName} با شناسه '{id}' یافت نشد.")
     {
         EntityName = entityName;
         Id = id;
     }
 
     /// <summary>
-    /// Gets the simple name of the entity type that was not found.
+    /// نام ساده‌ی نوع موجودیتی که پیدا نشد را برمی‌گرداند.
     /// </summary>
     public string EntityName { get; }
 
     /// <summary>
-    /// Gets the identifier that could not be found.
+    /// شناسه‌ای که پیدا نشد را برمی‌گرداند.
     /// </summary>
     public object Id { get; }
 }

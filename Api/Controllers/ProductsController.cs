@@ -8,11 +8,11 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Api.Controllers;
 
 /// <summary>
-/// Product catalog endpoints: create, paged search, retrieval, update, delete and stock adjustment.
+/// اندپوینت‌های کاتالوگ محصول: ایجاد، جست‌وجوی صفحه‌بندی‌شده، دریافت تکی، ویرایش، حذف و اصلاح موجودی.
 /// </summary>
 /// <remarks>
-/// Reading is open to any authenticated user; write operations (POST, PUT, DELETE) are
-/// restricted to administrators via an additional role requirement.
+/// خواندن برای هر کاربر احراز هویت‌شده آزاد است؛ عملیات نوشتنی (POST، PUT، DELETE) با
+/// نیازمندی نقش اضافه فقط برای مدیران مجاز است.
 /// </remarks>
 [ApiController]
 [Route("api/[controller]")]
@@ -23,26 +23,26 @@ public class ProductsController : ControllerBase
     private readonly IProductService _productService;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ProductsController"/> class.
+    /// نمونه جدیدی از <see cref="ProductsController"/> می‌سازد.
     /// </summary>
-    /// <param name="productService">The product service.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="productService"/> is <c>null</c>.</exception>
+    /// <param name="productService">سرویس محصول.</param>
+    /// <exception cref="ArgumentNullException">وقتی <paramref name="productService"/> برابر <c>null</c> باشد پرتاب می‌شود.</exception>
     public ProductsController(IProductService productService)
     {
         _productService = productService ?? throw new ArgumentNullException(nameof(productService));
     }
 
     /// <summary>
-    /// Creates a new product. Administrators only.
+    /// یک محصول جدید ایجاد می‌کند. فقط مدیران.
     /// </summary>
-    /// <param name="request">The product creation payload.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The created product.</returns>
-    /// <response code="201">The product was created.</response>
-    /// <response code="400">The payload failed validation.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">The caller is not an administrator.</response>
-    /// <response code="409">The SKU is already taken.</response>
+    /// <param name="request">بدنه درخواست ایجاد محصول.</param>
+    /// <param name="cancellationToken">توکن لغو عملیات.</param>
+    /// <returns>محصول ایجادشده.</returns>
+    /// <response code="201">محصول ایجاد شد.</response>
+    /// <response code="400">بدنه درخواست اعتبارسنجی نشد.</response>
+    /// <response code="401">توکن دسترسی معتبر ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
+    /// <response code="409">کد کالا (SKU) قبلاً استفاده شده است.</response>
     [HttpPost]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status201Created)]
@@ -59,16 +59,16 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a filtered, paginated page of products.
+    /// یک صفحه فیلترشده و صفحه‌بندی‌شده از محصولات را برمی‌گرداند.
     /// </summary>
     /// <param name="filter">
-    /// Query parameters: <c>searchTerm</c>, <c>isActive</c>, <c>pageNumber</c>, <c>pageSize</c>.
+    /// پارامترهای کوئری: <c>searchTerm</c>، <c>isActive</c>، <c>pageNumber</c>، <c>pageSize</c>.
     /// </param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The requested page of products.</returns>
-    /// <response code="200">The page was returned.</response>
-    /// <response code="400">A query parameter was invalid.</response>
-    /// <response code="401">No valid access token was presented.</response>
+    /// <param name="cancellationToken">توکن لغو عملیات.</param>
+    /// <returns>صفحه درخواستی محصولات.</returns>
+    /// <response code="200">صفحه برگردانده شد.</response>
+    /// <response code="400">یکی از پارامترهای کوئری نامعتبر است.</response>
+    /// <response code="401">توکن دسترسی معتبر ارائه نشده است.</response>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<ProductDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -82,14 +82,14 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a single product by identifier.
+    /// یک محصول را با شناسه برمی‌گرداند.
     /// </summary>
-    /// <param name="id">The product identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The requested product.</returns>
-    /// <response code="200">The product was returned.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="404">No product with the given identifier exists.</response>
+    /// <param name="id">شناسه محصول.</param>
+    /// <param name="cancellationToken">توکن لغو عملیات.</param>
+    /// <returns>محصول درخواستی.</returns>
+    /// <response code="200">محصول برگردانده شد.</response>
+    /// <response code="401">توکن دسترسی معتبر ارائه نشده است.</response>
+    /// <response code="404">محصولی با این شناسه وجود ندارد.</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -101,19 +101,19 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Updates an existing product (stock is changed through separate stock movements, not here).
-    /// Administrators only.
+    /// یک محصول موجود را ویرایش می‌کند (موجودی از مسیر جداگانه اصلاح می‌شود، نه اینجا).
+    /// فقط مدیران.
     /// </summary>
-    /// <param name="id">The product identifier.</param>
-    /// <param name="request">The product update payload.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The updated product.</returns>
-    /// <response code="200">The product was updated.</response>
-    /// <response code="400">The payload failed validation.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">The caller is not an administrator.</response>
-    /// <response code="404">No product with the given identifier exists.</response>
-    /// <response code="409">The SKU is already taken.</response>
+    /// <param name="id">شناسه محصول.</param>
+    /// <param name="request">بدنه درخواست ویرایش محصول.</param>
+    /// <param name="cancellationToken">توکن لغو عملیات.</param>
+    /// <returns>محصول ویرایش‌شده.</returns>
+    /// <response code="200">محصول ویرایش شد.</response>
+    /// <response code="400">بدنه درخواست اعتبارسنجی نشد.</response>
+    /// <response code="401">توکن دسترسی معتبر ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
+    /// <response code="404">محصولی با این شناسه وجود ندارد.</response>
+    /// <response code="409">کد کالا (SKU) قبلاً استفاده شده است.</response>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
@@ -132,15 +132,15 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a product. Administrators only.
+    /// یک محصول را حذف می‌کند. فقط مدیران.
     /// </summary>
-    /// <param name="id">The product identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>No content on success.</returns>
-    /// <response code="204">The product was deleted.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">The caller is not an administrator.</response>
-    /// <response code="404">No product with the given identifier exists.</response>
+    /// <param name="id">شناسه محصول.</param>
+    /// <param name="cancellationToken">توکن لغو عملیات.</param>
+    /// <returns>در صورت موفقیت بدون بدنه.</returns>
+    /// <response code="204">محصول حذف شد.</response>
+    /// <response code="401">توکن دسترسی معتبر ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
+    /// <response code="404">محصولی با این شناسه وجود ندارد.</response>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

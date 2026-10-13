@@ -10,17 +10,17 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Application.Services;
 
 /// <summary>
-/// Implements customer management: creation with email uniqueness, paged retrieval,
-/// update and delete. All persistence goes through <see cref="IUnitOfWork"/>.
+/// پیاده‌سازی مدیریت مشتریان: ایجاد با یکتایی ایمیل، بازیابی صفحه‌بندی‌شده،
+/// به‌روزرسانی و حذف. همه‌ی ذخیره‌سازی از طریق <see cref="IUnitOfWork"/> انجام می‌شود.
 /// </summary>
 public class CustomerService : ICustomerService
 {
     private readonly IUnitOfWork _unitOfWork;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CustomerService"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="CustomerService"/> می‌سازد.
     /// </summary>
-    /// <param name="unitOfWork">The unit of work used for all persistence.</param>
+    /// <param name="unitOfWork">واحد کاری که برای همه‌ی ذخیره‌سازی‌ها استفاده می‌شود.</param>
     public CustomerService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -34,11 +34,11 @@ public class CustomerService : ICustomerService
 
         string normalizedEmail = request.Email.Trim();
 
-        // Best-effort duplicate guard; the unique index in the database remains the
-        // authoritative protection against concurrent inserts.
+        // نگهبان تکراری به‌صورت best-effort؛ ایندکس یکتای دیتابیس همچنان حافظ
+        // مقتدرانه در برابر درج‌های همزمان است.
         if (await _unitOfWork.Customers.ExistsByEmailAsync(normalizedEmail, cancellationToken))
         {
-            throw new DuplicateEntityException(nameof(Customer), $"A customer with email '{normalizedEmail}' already exists.");
+            throw new DuplicateEntityException(nameof(Customer), $"مشتری‌ای با ایمیل '{normalizedEmail}' از قبل وجود دارد.");
         }
 
         DateTime now = DateTime.UtcNow;
@@ -104,7 +104,7 @@ public class CustomerService : ICustomerService
         if (!string.Equals(customer.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase)
             && await _unitOfWork.Customers.ExistsByEmailAsync(normalizedEmail, cancellationToken))
         {
-            throw new DuplicateEntityException(nameof(Customer), $"A customer with email '{normalizedEmail}' already exists.");
+            throw new DuplicateEntityException(nameof(Customer), $"مشتری‌ای با ایمیل '{normalizedEmail}' از قبل وجود دارد.");
         }
 
         customer.FirstName = request.FirstName.Trim();

@@ -12,24 +12,24 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Application.Services;
 
 /// <summary>
-/// Implements the order lifecycle: creation with price snapshots and unique order numbers,
-/// paged retrieval, forward-only status transitions with stock validation on confirmation,
-/// deletion and bulk creation with per-order results. All persistence goes through
-/// <see cref="IUnitOfWork"/>; the concrete implementations live in Infrastructure.
+/// پیاده‌سازی چرخه‌ی حیات سفارش: ایجاد با اسنپ‌شات قیمت‌ها و شماره‌های سفارش یکتا،
+/// بازیابی صفحه‌بندی‌شده، گذارهای رو به جلو با اعتبارسنجی موجودی هنگام تأیید،
+/// حذف و ایجاد گروهی با نتیجه‌ی هر سفارش. همه‌ی ذخیره‌سازی از طریق
+/// <see cref="IUnitOfWork"/> انجام می‌شود؛ پیاده‌سازی‌های مشخص در Infrastructure قرار دارند.
 /// </summary>
 public class OrderService : IOrderService
 {
     /// <summary>
-    /// Number of attempts to generate an unused order number before giving up.
+    /// تعداد تلاش برای تولید شماره‌ی سفارش استفاده‌نشده پیش از تسلیم شدن.
     /// </summary>
     private const int OrderNumberGenerationAttempts = 5;
 
     private readonly IUnitOfWork _unitOfWork;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="OrderService"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="OrderService"/> می‌سازد.
     /// </summary>
-    /// <param name="unitOfWork">The unit of work used for all persistence.</param>
+    /// <param name="unitOfWork">واحد کاری که برای همه‌ی ذخیره‌سازی‌ها استفاده می‌شود.</param>
     public OrderService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -109,7 +109,7 @@ public class OrderService : IOrderService
         if (newStatus == OrderStatus.Cancelled
             && !string.Equals(requesterRole, Roles.Admin, StringComparison.Ordinal))
         {
-            throw new UnauthorizedOperationException("Only administrators are allowed to cancel orders.");
+            throw new UnauthorizedOperationException("فقط مدیران اجازه‌ی لغو سفارش‌ها را دارند.");
         }
 
         if (!CanTransition(order.Status, newStatus))
@@ -145,7 +145,7 @@ public class OrderService : IOrderService
     {
         RequestValidator.EnsureNotEmptyId(id, nameof(id));
 
-        // Existence check only; role enforcement is done by the API layer.
+        // فقط بررسی وجود؛ اعمال نقش‌ها توسط لایه‌ی API انجام می‌شود.
         Order order = await _unitOfWork.Orders.GetByIdAsync(id, cancellationToken)
             ?? throw new EntityNotFoundException(nameof(Order), id);
 
@@ -160,8 +160,8 @@ public class OrderService : IOrderService
     {
         RequestValidator.ValidateBulkOrderRequest(request);
 
-        // Load every referenced product once; per-order we then only check membership
-        // and active state, which keeps bulk creation fast on large batches.
+        // بارگذاری همه‌ی محصولات ارجاع‌داده‌شده یک بار؛ سپس برای هر سفارش فقط عضویت
+        // و وضعیت فعال بودن بررسی می‌شود که ایجاد گروهی را روی دسته‌های بزرگ سریع نگه می‌دارد.
         IReadOnlyDictionary<Guid, Product> productsById = await LoadBulkProductsOrFailAsync(request, cancellationToken);
         var customersById = new Dictionary<Guid, Customer>();
         var results = new List<BulkOrderResultItem>(request.Orders.Count);
@@ -185,8 +185,8 @@ public class OrderService : IOrderService
                     Order order = BuildOrder(orderRequest, orderNumber, customer, productsById);
 
                     await _unitOfWork.Orders.AddAsync(order, cancellationToken);
-                    // Save per order inside the shared transaction so each created order
-                    // gets its identifier while the whole batch still commits atomically.
+                    // ذخیره‌سازی per order داخل تراکنش مشترک تا هر سفارش ایجادشده
+                    // شناسه‌اش را بگیرد و در عین حال کل دسته به‌صورت اتمیک commit شود.
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                     results.Add(new BulkOrderResultItem
@@ -200,8 +200,8 @@ public class OrderService : IOrderService
                 }
                 catch (Exception exception)
                 {
-                    // Keep processing the remaining orders; the failure of one order
-                    // must not discard the results of its siblings.
+                    // پردازش سفارش‌های باقی‌مانده ادامه می‌یابد؛ شکست یک سفارش
+                    // نباید نتایج سفارش‌های خواهر و برادرش را دور بریزد.
                     results.Add(new BulkOrderResultItem
                     {
                         Index = index,
@@ -242,9 +242,9 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// Builds a new <see cref="Order"/> entity from the request: snapshots each product's
-    /// current price into the line items and computes line totals and the order total.
-    /// The product catalog price may change later; orders always keep their snapshot.
+    /// موجودیت <see cref="Order"/> جدیدی را از درخواست می‌سازد: قیمت فعلی هر محصول را در
+    /// ردیف‌های سفارش اسنپ‌شات می‌کند و قیمت کل ردیف‌ها و مبلغ کل سفارش را محاسبه می‌کند.
+    /// قیمت کاتالوگ محصول ممکن است بعداً تغییر کند؛ سفارش‌ها همیشه اسنپ‌شات خود را نگه می‌دارند.
     /// </summary>
     private static Order BuildOrder(
         CreateOrderRequest request,
@@ -291,8 +291,8 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// Generates the order number in the format <c>ORD-yyyyMMdd-xxxxxx</c> with six random
-    /// digits, retrying until the number is not already taken.
+    /// شماره‌ی سفارش را با قالب <c>ORD-yyyyMMdd-xxxxxx</c> و شش رقم تصادفی تولید می‌کند
+    /// و تا زمانی که شماره قبلاً اشغال نشده باشد تلاش می‌کند.
     /// </summary>
     private async Task<string> GenerateUniqueOrderNumberAsync(CancellationToken cancellationToken)
     {
@@ -306,12 +306,12 @@ public class OrderService : IOrderService
         }
 
         throw new DomainException(
-            $"Unable to generate a unique order number after {OrderNumberGenerationAttempts} attempts.");
+            $"پس از {OrderNumberGenerationAttempts} تلاش نتوانستم شماره‌ی سفارش یکتا تولید کنم.");
     }
 
     /// <summary>
-    /// Builds a single order number in the format <c>ORD-yyyyMMdd-xxxxxx</c>.
-    /// Random digits come from the cryptographic generator, not <see cref="Random"/>.
+    /// یک شماره‌ی سفارش با قالب <c>ORD-yyyyMMdd-xxxxxx</c> می‌سازد.
+    /// ارقام تصادفی از مولد رمزنگاری می‌آیند، نه از <see cref="Random"/>.
     /// </summary>
     private static string GenerateOrderNumber()
     {
@@ -321,7 +321,7 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// Loads the customer for the order or throws when it does not exist.
+    /// مشتری سفارش را بارگذاری می‌کند یا در صورت نبودن پرتاب می‌کند.
     /// </summary>
     private async Task<Customer> GetCustomerOrFailAsync(Guid customerId, CancellationToken cancellationToken)
     {
@@ -330,8 +330,8 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// Loads the distinct products of a single order request, ensuring every product exists
-    /// and is active, and returns them keyed by product identifier.
+    /// محصولات یکتای یک درخواست سفارش را بارگذاری می‌کند، تضمین می‌کند هر محصول وجود دارد
+    /// و فعال است، و آن‌ها را با کلید شناسه‌ی محصول برمی‌گرداند.
     /// </summary>
     private async Task<IReadOnlyDictionary<Guid, Product>> LoadOrderedProductsOrFailAsync(
         CreateOrderRequest request,
@@ -350,7 +350,7 @@ public class OrderService : IOrderService
 
             if (!product.IsActive)
             {
-                throw new DomainException($"Product '{product.Id}' is not active and cannot be ordered.");
+                throw new DomainException($"محصول '{product.Id}' فعال نیست و نمی‌توان آن را سفارش داد.");
             }
         }
 
@@ -358,8 +358,8 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// Loads the distinct products of a bulk request once, with the same existence and
-    /// active checks as <see cref="LoadOrderedProductsOrFailAsync"/>.
+    /// محصولات یکتای یک درخواست گروهی را یک بار بارگذاری می‌کند، با همان بررسی‌های وجود و
+    /// فعال بودن <see cref="LoadOrderedProductsOrFailAsync"/>.
     /// </summary>
     private async Task<IReadOnlyDictionary<Guid, Product>> LoadBulkProductsOrFailAsync(
         BulkCreateOrdersRequest request,
@@ -384,7 +384,7 @@ public class OrderService : IOrderService
 
                 if (!product.IsActive)
                 {
-                    throw new DomainException($"Product '{product.Id}' is not active and cannot be ordered.");
+                    throw new DomainException($"محصول '{product.Id}' فعال نیست و نمی‌توان آن را سفارش داد.");
                 }
             }
         }
@@ -393,9 +393,9 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// Validates stock for every item of the order first and only then decrements it.
-    /// Checking everything up front guarantees that a shortage on a later item never
-    /// leaves earlier items already decremented (no partial stock reduction).
+    /// ابتدا موجودی همه‌ی اقلام سفارش را اعتبارسنجی و سپس کاهش می‌دهد.
+    /// بررسی همه‌چیز از پیش تضمین می‌کند که کمبود در ردیف بعدی هرگز
+    /// ردیف‌های قبلی را از قبل کاهش‌داده‌شده رها نکند (بدون کاهش جزئی موجودی).
     /// </summary>
     private async Task ValidateAndDecrementStockAsync(Order order, CancellationToken cancellationToken)
     {

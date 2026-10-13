@@ -1,57 +1,57 @@
 namespace OrderManagement.Application.Dtos.Auth;
 
 /// <summary>
-/// Public projection of a user account. Never exposes the password hash.
+/// نمای عمومی یک حساب کاربری. هرگز هش گذرواژه را افشا نمی‌کند.
 /// </summary>
 public class UserDto
 {
     /// <summary>
-    /// Gets or sets the unique identifier of the user.
+    /// شناسه‌ی یکتای کاربر را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the user name.
+    /// نام کاربری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string UserName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the email address.
+    /// آدرس ایمیل را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the first name.
+    /// نام را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string FirstName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the last name.
+    /// نام خانوادگی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string LastName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the optional phone number.
+    /// شماره تلفن اختیاری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? PhoneNumber { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether the account is active.
+    /// مقداری که نشان می‌دهد حساب فعال است را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public bool IsActive { get; set; }
 
     /// <summary>
-    /// Gets or sets the role name of the user (for example <c>User</c> or <c>Admin</c>).
+    /// نام نقش کاربر را می‌گیرد یا تنظیم می‌کند (برای نمونه <c>User</c> یا <c>Admin</c>).
     /// </summary>
     public string Role { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the UTC timestamp when the account was created.
+    /// زمان‌نشان UTC هنگام ایجاد حساب را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC timestamp of the last successful sign in, if any.
+    /// زمان‌نشان UTC آخرین ورود موفق، در صورت وجود، را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime? LastLoginAt { get; set; }
 }

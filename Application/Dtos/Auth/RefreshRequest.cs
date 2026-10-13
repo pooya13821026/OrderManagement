@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Auth;
 
 /// <summary>
-/// Payload for exchanging a valid refresh token for a new token pair (rotation).
+/// بدنه‌ی درخواست برای مبادله‌ی یک توکن refresh معتبر با جفت توکن جدید (rotation).
 /// </summary>
 public class RefreshRequest
 {
     /// <summary>
-    /// Gets or sets the refresh token previously issued to the client.
+    /// توکن refresh قبلاً صادرشده برای کلاینت را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(500)]

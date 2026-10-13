@@ -1,52 +1,52 @@
 namespace OrderManagement.Application.Dtos.Products;
 
 /// <summary>
-/// Public projection of a product.
+/// نمای عمومی یک محصول.
 /// </summary>
 public class ProductDto
 {
     /// <summary>
-    /// Gets or sets the unique identifier of the product.
+    /// شناسه‌ی یکتای محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the display name.
+    /// نام نمایشی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the optional description.
+    /// توضیحات اختیاری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? Description { get; set; }
 
     /// <summary>
-    /// Gets or sets the unit price.
+    /// قیمت واحد را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public decimal Price { get; set; }
 
     /// <summary>
-    /// Gets or sets the number of units available in stock.
+    /// تعداد واحدهای موجود در انبار را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public int StockQuantity { get; set; }
 
     /// <summary>
-    /// Gets or sets the unique SKU code.
+    /// کد SKU یکتا را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the product is active.
+    /// مقداری که نشان می‌دهد محصول فعال است را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public bool IsActive { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC timestamp when the product was created.
+    /// زمان‌نشان UTC هنگام ایجاد محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC timestamp of the last update.
+    /// زمان‌نشان UTC آخرین به‌روزرسانی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime UpdatedAt { get; set; }
 }

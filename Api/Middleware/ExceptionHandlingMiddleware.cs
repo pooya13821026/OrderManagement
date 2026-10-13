@@ -4,11 +4,11 @@ using OrderManagement.Domain.Exceptions;
 namespace OrderManagement.Api.Middleware;
 
 /// <summary>
-/// Pipeline component that catches every exception escaping the controllers and the
-/// application services and translates it into an RFC 7807 <c>application/problem+json</c>
-/// response. Domain exceptions carry an explicit mapping (404/409/400/403); anything
-/// unexpected becomes a generic 500 whose detail never leaks internals to the caller.
-/// Failures are logged through <c>ILogger</c>, which Serilog captures via <c>AddSerilog</c>.
+/// جزئی از پایپ‌لاین که هر استثنای رها شده از کنترلرها و سرویس‌های اپلیکیشن را می‌گیرد و به
+/// پاسخ <c>application/problem+json</c> طبق RFC 7807 تبدیل می‌کند. استثناهای دامنه نگاشت صریح
+/// دارند (404/409/400/403)؛ هر خطای پیش‌بینی‌نشده به 500 عمومی تبدیل می‌شود که جزئیات داخلی را
+/// به فراخواننده لو نمی‌دهد. خطاها از طریق <c>ILogger</c> ثبت می‌شوند که Serilog با
+/// <c>AddSerilog</c> آن را دریافت می‌کند.
 /// </summary>
 public class ExceptionHandlingMiddleware
 {
@@ -16,11 +16,11 @@ public class ExceptionHandlingMiddleware
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ExceptionHandlingMiddleware"/> class.
+    /// نمونه جدیدی از <see cref="ExceptionHandlingMiddleware"/> می‌سازد.
     /// </summary>
-    /// <param name="next">The next component in the pipeline.</param>
-    /// <param name="logger">The logger used to record failures.</param>
-    /// <exception cref="ArgumentNullException">Thrown when an argument is <c>null</c>.</exception>
+    /// <param name="next">جزء بعدی پایپ‌لاین.</param>
+    /// <param name="logger">لاگری که خطاها را ثبت می‌کند.</param>
+    /// <exception cref="ArgumentNullException">وقتی یکی از آرگومان‌ها <c>null</c> باشد پرتاب می‌شود.</exception>
     public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
@@ -28,10 +28,10 @@ public class ExceptionHandlingMiddleware
     }
 
     /// <summary>
-    /// Runs the rest of the pipeline and maps any thrown exception to a problem response.
+    /// بقیه پایپ‌لاین را اجرا می‌کند و هر استثنای پرتاب‌شده را به پاسخ مشکل (problem) تبدیل می‌کند.
     /// </summary>
-    /// <param name="context">The current HTTP context.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <param name="context">کانتکست جاری HTTP.</param>
+    /// <returns>تسکی که نشان‌دهنده عملیات ناهمگام است.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -44,11 +44,11 @@ public class ExceptionHandlingMiddleware
         {
             if (context.Response.HasStarted)
             {
-                // The body is already on the wire: the only safe option is to let the
-                // host abort the connection, so the original exception is rethrown.
+                // بدنه پاسخ قبلاً روی سیم رفته است: تنها راه امن این است که بگذاریم
+                // هاست اتصال را قطع کند، پس استثنای اصلی دوباره پرتاب می‌شود.
                 _logger.LogWarning(
                     exception,
-                    "Response for {Method} {Path} had already started; rethrowing.",
+                    "پاسخ {Method} {Path} قبلاً شروع شده بود؛ پرتاب مجدد.",
                     context.Request.Method,
                     context.Request.Path);
                 throw;
@@ -59,30 +59,30 @@ public class ExceptionHandlingMiddleware
     }
 
     /// <summary>
-    /// Writes the problem-details payload for the given exception.
+    /// بدنه جزئیات-مشکل (problem-details) متناظر با استثنا را می‌نویسد.
     /// </summary>
-    /// <param name="context">The current HTTP context.</param>
-    /// <param name="exception">The exception to translate.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <param name="context">کانتکست جاری HTTP.</param>
+    /// <param name="exception">استثنایی که باید ترجمه شود.</param>
+    /// <returns>تسکی که نشان‌دهنده عملیات ناهمگام است.</returns>
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         (int statusCode, string title, string detail) = MapException(exception);
 
         if (statusCode >= StatusCodes.Status500InternalServerError)
         {
-            // Unexpected failure: log full detail, but only expose a generic message.
+            // خطای پیش‌بینی‌نشده: جزئیات کامل لاگ می‌شود ولی فقط پیام عمومی به بیرون داده می‌شود.
             _logger.LogError(
                 exception,
-                "Unhandled exception while processing {Method} {Path}.",
+                "استثنای مدیریت‌نشده هنگام پردازش {Method} {Path}.",
                 context.Request.Method,
                 context.Request.Path);
         }
         else
         {
-            // Known domain outcome (404/409/400/403): the message is meant for the caller.
+            // خروجی شناخته‌شده دامنه (404/409/400/403): پیام برای فراخواننده در نظر گرفته شده است.
             _logger.LogWarning(
                 exception,
-                "Request {Method} {Path} failed with {StatusCode}.",
+                "درخواست {Method} {Path} با کد {StatusCode} ناموفق بود.",
                 context.Request.Method,
                 context.Request.Path,
                 statusCode);
@@ -97,7 +97,7 @@ public class ExceptionHandlingMiddleware
             Type = $"https://httpstatuses.com/{statusCode}"
         };
 
-        // Correlates the response with the server-side log entries for this request.
+        // پاسخ را با ورودی‌های لاگ سمت سرور برای همین درخواست مرتبط می‌کند.
         problem.Extensions["traceId"] = context.TraceIdentifier;
 
         context.Response.Clear();
@@ -107,28 +107,28 @@ public class ExceptionHandlingMiddleware
     }
 
     /// <summary>
-    /// Maps an exception to its HTTP status code, response title and client-facing detail.
-    /// Derived domain exceptions are matched before their base <see cref="DomainException"/>.
+    /// هر استثنا را به کد وضعیت HTTP، عنوان پاسخ و جزئیات قابل نمایش به کاربر تبدیل می‌کند.
+    /// استثناهای مشتق‌شده دامنه قبل از <see cref="DomainException"/> پایه تطبیق داده می‌شوند.
     /// </summary>
-    /// <param name="exception">The exception to map.</param>
-    /// <returns>The status code, title and detail for the problem response.</returns>
+    /// <param name="exception">استثنایی که باید نگاشت شود.</param>
+    /// <returns>کد وضعیت، عنوان و جزئیات پاسخ مشکل.</returns>
     private static (int StatusCode, string Title, string Detail) MapException(Exception exception) => exception switch
     {
         EntityNotFoundException notFound =>
-            (StatusCodes.Status404NotFound, "Resource not found", notFound.Message),
+            (StatusCodes.Status404NotFound, "منبع یافت نشد", notFound.Message),
         DuplicateEntityException duplicate =>
-            (StatusCodes.Status409Conflict, "Resource already exists", duplicate.Message),
+            (StatusCodes.Status409Conflict, "منبع قبلاً وجود دارد", duplicate.Message),
         InsufficientStockException stock =>
-            (StatusCodes.Status409Conflict, "Insufficient stock", stock.Message),
+            (StatusCodes.Status409Conflict, "موجودی ناکافی است", stock.Message),
         InvalidStatusTransitionException transition =>
-            (StatusCodes.Status400BadRequest, "Invalid status transition", transition.Message),
+            (StatusCodes.Status400BadRequest, "تغییر وضعیت نامعتبر است", transition.Message),
         UnauthorizedOperationException unauthorized =>
-            (StatusCodes.Status403Forbidden, "Operation not allowed", unauthorized.Message),
+            (StatusCodes.Status403Forbidden, "عملیات مجاز نیست", unauthorized.Message),
         DomainException domain =>
-            (StatusCodes.Status400BadRequest, "Business rule violated", domain.Message),
+            (StatusCodes.Status400BadRequest, "قانون کسب‌وکار نقض شد", domain.Message),
         _ =>
             (StatusCodes.Status500InternalServerError,
-                "Internal server error",
-                "An unexpected error occurred while processing the request.")
+                "خطای داخلی سرور",
+                "هنگام پردازش درخواست خطای پیش‌بینی‌نشده‌ای رخ داد.")
     };
 }

@@ -5,9 +5,9 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Infrastructure.Persistence.Configurations;
 
 /// <summary>
-/// Maps <see cref="OrderItem"/> to the <c>OrderItems</c> table: positive quantity check
-/// constraint, decimal unit price, cascade delete with the order and restrict delete
-/// with the product, plus the row version.
+/// <see cref="OrderItem"/> را روی جدول <c>OrderItems</c> نگاشت می‌کند: قید check برای
+/// تعداد مثبت، قیمت واحد اعشاری، حذف cascade با سفارش و حذف restrict با محصول،
+/// به‌علاوه‌ی نسخه‌ی ردیف.
 /// </summary>
 public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
 {
@@ -16,7 +16,7 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
     {
         builder.ToTable("OrderItems", table =>
         {
-            // A line item without units makes no sense; the domain guard is backed by the database.
+            // ردیف سفارش بدون تعداد معنا ندارد؛ نگهبان دامنه توسط دیتابیس پشتیبانی می‌شود.
             table.HasCheckConstraint("CK_OrderItems_Quantity", "Quantity > 0");
         });
 
@@ -27,17 +27,17 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(item => item.CreatedAt).IsRequired();
         builder.Property(item => item.RowVersion).IsRowVersion();
 
-        // LineTotal is a computed property (Quantity * UnitPrice) and must not become a column.
+        // LineTotal یک پروپرتی محاسباتی (Quantity * UnitPrice) است و نباید به ستون تبدیل شود.
         builder.Ignore(item => item.LineTotal);
 
-        // Items are worthless without their order: deleting an order deletes its items.
+        // اقلام بدون سفارششان بی‌ارزشند: حذف سفارش، اقلامش را هم حذف می‌کند.
         builder.HasOne(item => item.Order)
             .WithMany(order => order.Items)
             .HasForeignKey(item => item.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // A product referenced by an order item must never be deleted through this path;
-        // orders keep their price snapshots even when the catalog entry is retired.
+        // محصولی که توسط یک ردیف سفارش ارجاع شده هرگز نباید از این مسیر حذف شود؛
+        // سفارش‌ها اسنپ‌شات قیمت خود را حتی پس از بازنشستگی ردیف کاتالوگ نگه می‌دارند.
         builder.HasOne(item => item.Product)
             .WithMany()
             .HasForeignKey(item => item.ProductId)

@@ -3,17 +3,17 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Payload for creating up to 500 orders in a single bulk operation.
+/// بدنه‌ی درخواست برای ایجاد حداکثر ۵۰۰ سفارش در یک عملیات گروهی.
 /// </summary>
 public class BulkCreateOrdersRequest
 {
     /// <summary>
-    /// Maximum number of orders accepted in one bulk request.
+    /// حداکثر تعداد سفارش مجاز در یک درخواست گروهی.
     /// </summary>
     public const int MaxOrders = 500;
 
     /// <summary>
-    /// Gets or sets the orders to create. Between 1 and <see cref="MaxOrders"/> entries.
+    /// سفارش‌هایی که باید ایجاد شوند را می‌گیرد یا تنظیم می‌کند. بین ۱ و <see cref="MaxOrders"/> مورد.
     /// </summary>
     [Required]
     [MinLength(1)]

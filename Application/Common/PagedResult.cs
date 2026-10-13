@@ -1,18 +1,18 @@
 namespace OrderManagement.Application.Common;
 
 /// <summary>
-/// Represents one page of a paged query together with pagination metadata.
+/// یک صفحه از نتیجه‌ی پرس‌وجوی صفحه‌بندی‌شده را به همراه فراداده‌ی صفحه‌بندی نشان می‌دهد.
 /// </summary>
-/// <typeparam name="T">The type of the items on the page.</typeparam>
+/// <typeparam name="T">نوع اقلام موجود در صفحه.</typeparam>
 public class PagedResult<T>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="PagedResult{T}"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="PagedResult{T}"/> می‌سازد.
     /// </summary>
-    /// <param name="items">The items belonging to the requested page.</param>
-    /// <param name="pageNumber">The 1-based page number that was requested.</param>
-    /// <param name="pageSize">The requested page size.</param>
-    /// <param name="totalCount">The total number of matching items across all pages.</param>
+    /// <param name="items">اقلام تعلق‌دار به صفحه‌ی درخواست‌شده.</param>
+    /// <param name="pageNumber">شماره‌ی صفحه‌ی درخواستی که از ۱ شروع می‌شود.</param>
+    /// <param name="pageSize">اندازه‌ی صفحه‌ی درخواست‌شده.</param>
+    /// <param name="totalCount">تعداد کل اقلام منطبق در همه‌ی صفحات.</param>
     public PagedResult(IReadOnlyList<T> items, int pageNumber, int pageSize, int totalCount)
     {
         Items = items;
@@ -25,27 +25,27 @@ public class PagedResult<T>
     }
 
     /// <summary>
-    /// Gets the items belonging to the requested page.
+    /// اقلام تعلق‌دار به صفحه‌ی درخواست‌شده را برمی‌گرداند.
     /// </summary>
     public IReadOnlyList<T> Items { get; }
 
     /// <summary>
-    /// Gets the 1-based page number that was requested.
+    /// شماره‌ی صفحه‌ی درخواستی که از ۱ شروع می‌شود را برمی‌گرداند.
     /// </summary>
     public int PageNumber { get; }
 
     /// <summary>
-    /// Gets the requested page size.
+    /// اندازه‌ی صفحه‌ی درخواست‌شده را برمی‌گرداند.
     /// </summary>
     public int PageSize { get; }
 
     /// <summary>
-    /// Gets the total number of matching items across all pages.
+    /// تعداد کل اقلام منطبق در همه‌ی صفحات را برمی‌گرداند.
     /// </summary>
     public int TotalCount { get; }
 
     /// <summary>
-    /// Gets the total number of pages available for the given page size.
+    /// تعداد کل صفحات موجود برای اندازه‌ی صفحه‌ی داده‌شده را برمی‌گرداند.
     /// </summary>
     public int TotalPages { get; }
 }

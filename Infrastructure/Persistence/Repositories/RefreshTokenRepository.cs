@@ -5,17 +5,16 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// EF Core implementation of <see cref="IRefreshTokenRepository"/>. Display reads are not
-/// tracked, the refresh-token hash lookup returns a tracked entity because the refresh
-/// flow revokes it, and the bulk revoke executes directly in the database so it needs no
-/// follow-up save.
+/// پیاده‌سازی EF Core برای <see cref="IRefreshTokenRepository"/>. خواندن‌های نمایشی ردیابی
+/// نمی‌شوند، جست‌وجوی هش توکن refresh موجودیت tracked برمی‌گرداند چون جریان refresh آن را
+/// لغو (revoke) می‌کند، و لغو گروهی مستقیماً در دیتابیس اجرا می‌شود و به ذخیره‌ی بعدی نیاز ندارد.
 /// </summary>
 public class RefreshTokenRepository : EfRepository<RefreshToken, Guid>, IRefreshTokenRepository
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="RefreshTokenRepository"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="RefreshTokenRepository"/> می‌سازد.
     /// </summary>
-    /// <param name="context">The shared database context of the current scope.</param>
+    /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
     public RefreshTokenRepository(OrderManagementDbContext context)
         : base(context)
     {
@@ -29,9 +28,9 @@ public class RefreshTokenRepository : EfRepository<RefreshToken, Guid>, IRefresh
             return null;
         }
 
-        // Tracked on purpose: the refresh flow revokes the presented token (Update) and
-        // saves it; a detached copy would collide with an already tracked instance.
-        // The authentication service dereferences the owner, so the user is included.
+        // عمداً tracked: جریان refresh توکن ارائه‌شده را لغو (Update) و ذخیره می‌کند؛ یک
+        // نسخه‌ی detached با نمونه‌ی از قبل ردیابی‌شده تداخل پیدا می‌کند.
+        // سرویس احراز هویت مالک را dereference می‌کند، پس کاربر هم include می‌شود.
         return await Context.RefreshTokens
             .Include(token => token.User)
             .FirstOrDefaultAsync(token => token.TokenHash == tokenHash, cancellationToken);
@@ -56,9 +55,9 @@ public class RefreshTokenRepository : EfRepository<RefreshToken, Guid>, IRefresh
     /// <inheritdoc />
     public async Task RevokeAllUserTokensAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        // A single set-based UPDATE instead of loading every token: revocation is a bulk
-        // state change that must apply even when the caller never calls SaveChanges, and it
-        // still runs inside a transaction opened through the UnitOfWork (same connection).
+        // یک UPDATE مبتنی بر set به‌جای بارگذاری همه‌ی توکن‌ها: لغو یک تغییر وضعیت گروهی
+        // است که باید اعمال شود حتی وقتی فراخواننده هرگز SaveChanges را صدا نزند، و همچنان
+        // داخل تراکنشی که از طریق UnitOfWork باز شده اجرا می‌شود (همان connection).
         await Context.RefreshTokens
             .Where(token => token.UserId == userId && token.RevokedAt == null)
             .ExecuteUpdateAsync(

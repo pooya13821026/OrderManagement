@@ -4,16 +4,16 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// EF Core implementation of <see cref="IOrderItemRepository"/>. Order items are only ever
-/// touched through their parent order, so the generic CRUD operations of
-/// <see cref="EfRepository{TEntity,TKey}"/> are sufficient.
+/// پیاده‌سازی EF Core برای <see cref="IOrderItemRepository"/>. ردیف‌های سفارش فقط از طریق
+/// سفارش والدشان لمس می‌شوند، بنابراین عملیات CRUD عمومی
+/// <see cref="EfRepository{TEntity,TKey}"/> کافی است.
 /// </summary>
 public class OrderItemRepository : EfRepository<OrderItem, Guid>, IOrderItemRepository
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="OrderItemRepository"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="OrderItemRepository"/> می‌سازد.
     /// </summary>
-    /// <param name="context">The shared database context of the current scope.</param>
+    /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
     public OrderItemRepository(OrderManagementDbContext context)
         : base(context)
     {

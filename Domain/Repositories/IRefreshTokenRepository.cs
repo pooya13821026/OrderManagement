@@ -3,29 +3,29 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Domain.Repositories;
 
 /// <summary>
-/// Repository contract for <see cref="RefreshToken"/> entities.
+/// قرارداد مخزن برای موجودیت‌های <see cref="RefreshToken"/>.
 /// </summary>
 public interface IRefreshTokenRepository : IRepository<RefreshToken, Guid>
 {
     /// <summary>
-    /// Gets a stored refresh token by the hash of the presented token,
-    /// or <c>null</c> when no such token exists.
+    /// توکن refresh ذخیره‌شده را با هش توکن ارائه‌شده برمی‌گرداند،
+    /// یا اگر چنین توکنی وجود نداشته باشد <c>null</c>.
     /// </summary>
-    /// <param name="tokenHash">The hash of the refresh token.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="tokenHash">هش توکن refresh.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all currently active (not revoked, not expired) refresh tokens of a user.
+    /// همه‌ی توکن‌های refresh در حال حاضر فعال (ابطال‌نشده، منقضی‌نشده)‌ی یک کاربر را برمی‌گرداند.
     /// </summary>
-    /// <param name="userId">The user identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="userId">شناسه‌ی کاربر.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Revokes every stored refresh token of the given user.
+    /// همه‌ی توکن‌های refresh ذخیره‌شده‌ی کاربر داده‌شده را باطل می‌کند.
     /// </summary>
-    /// <param name="userId">The user identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="userId">شناسه‌ی کاربر.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task RevokeAllUserTokensAsync(Guid userId, CancellationToken cancellationToken = default);
 }

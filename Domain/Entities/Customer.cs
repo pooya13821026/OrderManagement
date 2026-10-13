@@ -1,52 +1,52 @@
 namespace OrderManagement.Domain.Entities;
 
 /// <summary>
-/// Represents a customer of the store. Email is unique across all customers.
+/// نماینده‌ی یک مشتری فروشگاه است. ایمیل در میان همه‌ی مشتریان یکتاست.
 /// </summary>
 public class Customer
 {
     /// <summary>
-    /// Unique identifier of the customer.
+    /// شناسه‌ی یکتای مشتری.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// First name of the customer.
+    /// نام مشتری.
     /// </summary>
     public string FirstName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Last name of the customer.
+    /// نام خانوادگی مشتری.
     /// </summary>
     public string LastName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Email address of the customer. Unique, used also for lookups and duplicate checks.
+    /// آدرس ایمیل مشتری. یکتاست و برای جست‌وجو و بررسی موارد تکراری نیز استفاده می‌شود.
     /// </summary>
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Optional phone number of the customer.
+    /// شماره تلفن اختیاری مشتری.
     /// </summary>
     public string? Phone { get; set; }
 
     /// <summary>
-    /// Optional postal address of the customer.
+    /// آدرس پستی اختیاری مشتری.
     /// </summary>
     public string? Address { get; set; }
 
     /// <summary>
-    /// UTC timestamp when the customer record was created.
+    /// زمان‌نشان UTC هنگام ایجاد رکورد مشتری.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// UTC timestamp of the last update of the customer record.
+    /// زمان‌نشان UTC آخرین به‌روزرسانی رکورد مشتری.
     /// </summary>
     public DateTime UpdatedAt { get; set; }
 
     /// <summary>
-    /// Concurrency token managed by Entity Framework. A mismatch indicates a concurrent modification.
+    /// توکن همزمانی که توسط Entity Framework مدیریت می‌شود. ناهماهنگی آن نشان‌دهنده‌ی تغییر همزمان است.
     /// </summary>
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }

@@ -4,34 +4,33 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// Generic EF Core repository providing the basic CRUD operations of
-/// <see cref="IRepository{TEntity,TKey}"/> on top of the shared scoped
-/// <see cref="OrderManagementDbContext"/>.
-/// Key lookups (<see cref="GetByIdAsync"/>) return <b>tracked</b> entities because the
-/// application services mutate and save them, and because a service may attach a new
-/// entity graph that references them (an order references its already loaded customer
-/// and products - a detached reference would be re-inserted). List/lookup queries that
-/// only feed display code are implemented by the derived repositories with
-/// <c>AsNoTracking</c>.
+/// repository عمومی EF Core که عملیات CRUD پایه‌ی <see cref="IRepository{TEntity,TKey}"/>
+/// را روی <see cref="OrderManagementDbContext"/> مشترک و scoped فراهم می‌کند.
+/// جست‌وجوهای کلیدی (<see cref="GetByIdAsync"/>) موجودیت‌های <b>tracked</b> برمی‌گردانند، چون
+/// سرویس‌های برنامه آن‌ها را تغییر و ذخیره می‌کنند و چون ممکن است یک سرویس گراف جدیدی از
+/// موجودیت‌ها را متصل کند که به آن‌ها ارجاع می‌دهد (یک سفارش به مشتری و محصولات از قبل
+/// بارگذاری‌شده‌اش ارجاع می‌دهد - یک ارجاع detached دوباره درج می‌شود). پرس‌وجوهای
+/// فهرست/جست‌وجو که فقط کد نمایش را تغییر می‌دهند، توسط repository های مشتق‌شده با
+/// <c>AsNoTracking</c> پیاده می‌شوند.
 /// </summary>
-/// <typeparam name="TEntity">The entity type.</typeparam>
-/// <typeparam name="TKey">The primary key type.</typeparam>
+/// <typeparam name="TEntity">نوع موجودیت.</typeparam>
+/// <typeparam name="TKey">نوع کلید اصلی.</typeparam>
 public abstract class EfRepository<TEntity, TKey> : IRepository<TEntity, TKey>
     where TEntity : class
     where TKey : notnull
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="EfRepository{TEntity,TKey}"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="EfRepository{TEntity,TKey}"/> می‌سازد.
     /// </summary>
-    /// <param name="context">The shared database context of the current scope.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="context"/> is <c>null</c>.</exception>
+    /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
+    /// <exception cref="ArgumentNullException">وقتی <paramref name="context"/> برابر <c>null</c> باشد پرتاب می‌شود.</exception>
     protected EfRepository(OrderManagementDbContext context)
     {
         Context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
     /// <summary>
-    /// Gets the database context shared by all repositories of the same scope.
+    /// کانتکست دیتابیسی که همه‌ی repository های همین scope آن را به اشتراک می‌گذارند.
     /// </summary>
     protected OrderManagementDbContext Context { get; }
 
@@ -40,15 +39,15 @@ public abstract class EfRepository<TEntity, TKey> : IRepository<TEntity, TKey>
     {
         ArgumentNullException.ThrowIfNull(id);
 
-        // Deliberately tracked (FindAsync): callers either modify + Update() the result or
-        // reference it from a new entity graph that is handed to Add().
+        // عمداً tracked (FindAsync): فراخوانندگان یا نتیجه را تغییر و Update() می‌کنند یا
+        // از آن در گراف جدیدی از موجودیت‌ها استفاده می‌کنند که به Add() سپرده می‌شود.
         return await Context.Set<TEntity>().FindAsync(new object[] { id }, cancellationToken);
     }
 
     /// <inheritdoc />
     public virtual async Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        // Read-only listing for display: no change tracking overhead.
+        // فهرست فقط‌خواندنی برای نمایش: بدون هزینه‌ی ردیابی تغییرات.
         return await Context.Set<TEntity>()
             .AsNoTracking()
             .ToListAsync(cancellationToken);

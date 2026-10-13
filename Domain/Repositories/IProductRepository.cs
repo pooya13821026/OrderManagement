@@ -3,33 +3,33 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Domain.Repositories;
 
 /// <summary>
-/// Repository contract for <see cref="Product"/> entities.
+/// قرارداد مخزن برای موجودیت‌های <see cref="Product"/>.
 /// </summary>
 public interface IProductRepository : IRepository<Product, Guid>
 {
     /// <summary>
-    /// Gets a product by its unique SKU, or <c>null</c> when no such product exists.
+    /// محصول را بر اساس کد SKU یکتایش برمی‌گرداند، یا اگر چنین محصولی وجود نداشته باشد <c>null</c>.
     /// </summary>
-    /// <param name="sku">The SKU to look up.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="sku">کد SKUای که باید جست‌وجو شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<Product?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Determines whether a product with the given SKU already exists.
+    /// تعیین می‌کند که آیا محصولی با این کد SKU از قبل وجود دارد یا نه.
     /// </summary>
-    /// <param name="sku">The SKU to check.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="sku">کد SKUای که باید بررسی شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a page of products, optionally filtered by a free-text search term (name or SKU)
-    /// and by active flag.
+    /// صفحه‌ای از محصولات را برمی‌گرداند، به‌صورت اختیاری با فیلتر جست‌وجوی متنی آزاد (نام یا SKU)
+    /// و فیلتر پرچم فعال بودن.
     /// </summary>
-    /// <param name="searchTerm">Optional search term; <c>null</c> or empty skips the text filter.</param>
-    /// <param name="isActive">Optional active flag filter; <c>null</c> returns both active and inactive products.</param>
-    /// <param name="pageNumber">The 1-based page number.</param>
-    /// <param name="pageSize">The number of items per page.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="searchTerm">عبارت جست‌وجوی اختیاری؛ <c>null</c> یا خالی فیلتر متنی را رد می‌کند.</param>
+    /// <param name="isActive">فیلتر اختیاری پرچم فعال بودن؛ <c>null</c> هم محصولات فعال و هم غیرفعال را برمی‌گرداند.</param>
+    /// <param name="pageNumber">شماره‌ی صفحه که از ۱ شروع می‌شود.</param>
+    /// <param name="pageSize">تعداد اقلام در هر صفحه.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<PagedEntities<Product>> GetPagedAsync(
         string? searchTerm,
         bool? isActive,
@@ -38,9 +38,9 @@ public interface IProductRepository : IRepository<Product, Guid>
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the products matching the given identifiers.
+    /// محصولات منطبق با شناسه‌های داده‌شده را برمی‌گرداند.
     /// </summary>
-    /// <param name="ids">The product identifiers to fetch.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="ids">شناسه‌های محصولی که باید واکشی شوند.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<IReadOnlyList<Product>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
 }

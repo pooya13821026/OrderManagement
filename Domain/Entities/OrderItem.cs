@@ -1,59 +1,59 @@
 namespace OrderManagement.Domain.Entities;
 
 /// <summary>
-/// Represents a single line item of an <see cref="Order"/>.
-/// Stores a snapshot of the product price at the time the order was placed.
+/// نماینده‌ی یک ردیف از <see cref="Order"/> است.
+/// از قیمت محصول در زمان ثبت سفارش، اسنپ‌شات (تصویر لحظه‌ای) نگه‌داری می‌کند.
 /// </summary>
 public class OrderItem
 {
     /// <summary>
-    /// Unique identifier of the order item.
+    /// شناسه‌ی یکتای ردیف سفارش.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Identifier of the order this item belongs to. Deleted with the order (cascade).
+    /// شناسه‌ی سفارشی که این ردیف به آن تعلق دارد. همراه با سفارش حذف می‌شود (آبشاری).
     /// </summary>
     public Guid OrderId { get; set; }
 
     /// <summary>
-    /// Identifier of the ordered product.
+    /// شناسه‌ی محصول سفارش‌داده‌شده.
     /// </summary>
     public Guid ProductId { get; set; }
 
     /// <summary>
-    /// Number of units ordered. Must be greater than zero.
+    /// تعداد واحدهای سفارش‌داده‌شده. باید بزرگ‌تر از صفر باشد.
     /// </summary>
     public int Quantity { get; set; }
 
     /// <summary>
-    /// Snapshot of the product unit price at the moment the order was placed.
+    /// اسنپ‌شات قیمت واحد محصول در لحظه‌ی ثبت سفارش.
     /// </summary>
     public decimal UnitPrice { get; set; }
 
     /// <summary>
-    /// Gets the total price of this line: <see cref="Quantity"/> multiplied by <see cref="UnitPrice"/>.
-    /// Computed, never persisted.
+    /// قیمت کل این ردیف را برمی‌گرداند: <see cref="Quantity"/> ضربدر <see cref="UnitPrice"/>.
+    /// محاسبه‌ای است و هرگز ذخیره نمی‌شود.
     /// </summary>
     public decimal LineTotal => Quantity * UnitPrice;
 
     /// <summary>
-    /// UTC timestamp when the order item was created.
+    /// زمان‌نشان UTC هنگام ایجاد ردیف سفارش.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Concurrency token managed by Entity Framework. A mismatch indicates a concurrent modification.
+    /// توکن همزمانی که توسط Entity Framework مدیریت می‌شود. ناهماهنگی آن نشان‌دهنده‌ی تغییر همزمان است.
     /// </summary>
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     /// <summary>
-    /// Navigation property to the parent order.
+    /// پروپرتی ناوبری به سفارش والد.
     /// </summary>
     public Order Order { get; set; } = null!;
 
     /// <summary>
-    /// Navigation property to the referenced product.
+    /// پروپرتی ناوبری به محصول مرجع.
     /// </summary>
     public Product Product { get; set; } = null!;
 }

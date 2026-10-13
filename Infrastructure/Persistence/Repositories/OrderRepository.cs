@@ -6,16 +6,16 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// EF Core implementation of <see cref="IOrderRepository"/>: detail loading with includes,
-/// existence checks and the filtered/sorted/paged list query. Display queries use
-/// <c>AsNoTracking</c>.
+/// پیاده‌سازی EF Core برای <see cref="IOrderRepository"/>: بارگذاری جزئیات با include ها،
+/// بررسی‌های وجود و پرس‌وجوی فهرست فیلتر/مرتب/صفحه‌بندی‌شده. پرس‌وجوهای نمایشی از
+/// <c>AsNoTracking</c> استفاده می‌کنند.
 /// </summary>
 public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="OrderRepository"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="OrderRepository"/> می‌سازد.
     /// </summary>
-    /// <param name="context">The shared database context of the current scope.</param>
+    /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
     public OrderRepository(OrderManagementDbContext context)
         : base(context)
     {
@@ -24,9 +24,9 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
     /// <inheritdoc />
     public async Task<Order?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        // Tracked on purpose: besides the detail view this lookup feeds the status
-        // transition, which mutates and saves the returned graph - loading it tracked
-        // keeps identity resolution intact instead of attaching a second instance.
+        // عمداً tracked: این جست‌وجو علاوه بر نمای جزئیات، گذار وضعیت را هم تغذیه می‌کند
+        // که گراف برگردانده‌شده را تغییر و ذخیره می‌کند - بارگذاری tracked آن، تفکیک
+        // هویت (identity resolution) را سالم نگه می‌دارد به‌جای اینکه نمونه‌ی دومی متصل شود.
         return await Context.Orders
             .Include(order => order.Customer)
             .Include(order => order.Items)
@@ -72,7 +72,7 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
             query = query.Where(order => order.Status == status.Value);
         }
 
-        // Inclusive bounds: an order placed exactly on fromDate/toDate is included.
+        // مرزهای شمولی: سفارشی که دقیقاً در fromDate/toDate ثبت شده باشد شامل می‌شود.
         if (fromDate.HasValue)
         {
             query = query.Where(order => order.OrderDate >= fromDate.Value);
@@ -80,9 +80,9 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
 
         if (toDate.HasValue)
         {
-            // A bound without a time component (a pure date such as 2026-10-01) covers
-            // the whole day, so "to 2026-10-01" includes orders placed during that day.
-            // Timestamps with a time component are applied exactly as given.
+            // مرزی بدون مؤلفه‌ی زمان (یک تاریخ خالص مانند 2026-10-01) کل روز را پوشش
+            // می‌دهد، بنابراین «تا 2026-10-01» سفارش‌های ثبت‌شده در همان روز را شامل می‌شود.
+            // زمان‌نشان‌های دارای مؤلفه‌ی زمان دقیقاً همان‌طور که داده شده‌اند اعمال می‌شوند.
             DateTime to = toDate.Value;
             DateTime upperBound = to == to.Date
                 ? to.Date.AddDays(1).AddTicks(-1)
@@ -127,15 +127,15 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
     }
 
     /// <summary>
-    /// Applies a whitelisted sort column to the order query. Only <c>orderdate</c>,
-    /// <c>totalamount</c>, <c>status</c> and <c>ordernumber</c> are accepted; anything
-    /// else (including <c>null</c>) falls back to the default sort by order date, so a
-    /// client-supplied value can never influence the query shape.
+    /// یک ستون مرتب‌سازی از فهرست سفید را روی پرس‌وجوی سفارش اعمال می‌کند. فقط
+    /// <c>orderdate</c>، <c>totalamount</c>، <c>status</c> و <c>ordernumber</c> پذیرفته
+    /// می‌شوند؛ هر چیز دیگری (از جمله <c>null</c>) به مرتب‌سازی پیش‌فرض بر اساس تاریخ
+    /// سفارش برمی‌گردد، بنابراین مقدار ارسالی کلاینت هرگز نمی‌تواند بر شکل پرس‌وجو اثر بگذارد.
     /// </summary>
-    /// <param name="query">The filtered query.</param>
-    /// <param name="sortBy">The requested sort column name.</param>
-    /// <param name="descending">Whether to sort descending instead of ascending.</param>
-    /// <returns>The ordered query.</returns>
+    /// <param name="query">پرس‌وجوی فیلترشده.</param>
+    /// <param name="sortBy">نام ستون مرتب‌سازی درخواستی.</param>
+    /// <param name="descending">آیا به‌جای صعودی نزولی مرتب شود.</param>
+    /// <returns>پرس‌وجوی مرتب‌شده.</returns>
     private static IOrderedQueryable<Order> ApplySort(IQueryable<Order> query, string? sortBy, bool descending)
     {
         string key = sortBy?.Trim().ToLowerInvariant() ?? string.Empty;
@@ -154,7 +154,7 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
             "orderdate" => descending
                 ? query.OrderByDescending(order => order.OrderDate)
                 : query.OrderBy(order => order.OrderDate),
-            // Unknown or missing sort column: default to order date.
+            // ستون مرتب‌سازی ناشناخته یا غایب: پیش‌فرض روی تاریخ سفارش.
             _ => descending
                 ? query.OrderByDescending(order => order.OrderDate)
                 : query.OrderBy(order => order.OrderDate)

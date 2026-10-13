@@ -1,43 +1,43 @@
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Public projection of a single order line, including the product summary
-/// captured at the time the DTO was built.
+/// نمای عمومی یک ردیف سفارش، شامل خلاصه‌ی محصول
+/// که در زمان ساخت DTO ثبت شده است.
 /// </summary>
 public class OrderItemDto
 {
     /// <summary>
-    /// Gets or sets the unique identifier of the order item.
+    /// شناسه‌ی یکتای ردیف سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the identifier of the ordered product.
+    /// شناسه‌ی محصول سفارش‌داده‌شده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid ProductId { get; set; }
 
     /// <summary>
-    /// Gets or sets the name of the ordered product.
+    /// نام محصول سفارش‌داده‌شده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string ProductName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the SKU of the ordered product.
+    /// کد SKU محصول سفارش‌داده‌شده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the number of units ordered.
+    /// تعداد واحدهای سفارش‌داده‌شده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public int Quantity { get; set; }
 
     /// <summary>
-    /// Gets or sets the unit price snapshot taken when the order was placed.
+    /// اسنپ‌شات قیمت واحد که در زمان ثبت سفارش گرفته شده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public decimal UnitPrice { get; set; }
 
     /// <summary>
-    /// Gets or sets the line total: quantity multiplied by unit price.
+    /// قیمت کل ردیف: تعداد ضربدر قیمت واحد را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public decimal LineTotal { get; set; }
 }

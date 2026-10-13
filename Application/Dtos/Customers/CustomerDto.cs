@@ -1,47 +1,47 @@
 namespace OrderManagement.Application.Dtos.Customers;
 
 /// <summary>
-/// Public projection of a customer.
+/// نمای عمومی یک مشتری.
 /// </summary>
 public class CustomerDto
 {
     /// <summary>
-    /// Gets or sets the unique identifier of the customer.
+    /// شناسه‌ی یکتای مشتری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the first name.
+    /// نام را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string FirstName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the last name.
+    /// نام خانوادگی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string LastName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the unique email address.
+    /// آدرس ایمیل یکتا را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the optional phone number.
+    /// شماره تلفن اختیاری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? Phone { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional postal address.
+    /// آدرس پستی اختیاری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? Address { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC timestamp when the customer was created.
+    /// زمان‌نشان UTC هنگام ایجاد مشتری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC timestamp of the last update.
+    /// زمان‌نشان UTC آخرین به‌روزرسانی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime UpdatedAt { get; set; }
 }

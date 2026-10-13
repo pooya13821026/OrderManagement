@@ -1,57 +1,57 @@
 namespace OrderManagement.Domain.Repositories;
 
 /// <summary>
-/// Generic repository contract providing basic CRUD operations for an entity type.
-/// Implementations live in the Infrastructure layer.
+/// قرارداد مخزن (repository) عمومی که عملیات پایه‌ی CRUD را برای یک نوع موجودیت فراهم می‌کند.
+/// پیاده‌سازی‌ها در لایه‌ی Infrastructure قرار دارند.
 /// </summary>
-/// <typeparam name="TEntity">The entity type.</typeparam>
-/// <typeparam name="TKey">The type of the entity's primary key.</typeparam>
+/// <typeparam name="TEntity">نوع موجودیت.</typeparam>
+/// <typeparam name="TKey">نوع کلید اصلی موجودیت.</typeparam>
 public interface IRepository<TEntity, TKey>
     where TEntity : class
     where TKey : notnull
 {
     /// <summary>
-    /// Gets an entity by its identifier, or <c>null</c> when it does not exist.
+    /// موجودیت را بر اساس شناسه‌اش برمی‌گرداند، یا اگر وجود نداشته باشد <c>null</c>.
     /// </summary>
-    /// <param name="id">The entity identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="id">شناسه‌ی موجودیت.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all entities of the type.
+    /// همه‌ی موجودیت‌های این نوع را برمی‌گرداند.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a new entity to the unit of work. The change is not persisted until save is called.
+    /// موجودیت جدیدی را به واحد کار (unit of work) اضافه می‌کند. تا زمان فراخوانی ذخیره، تغییرات ماندگار نمی‌شوند.
     /// </summary>
-    /// <param name="entity">The entity to add.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="entity">موجودیتی که باید اضافه شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a range of new entities to the unit of work. The changes are not persisted until save is called.
+    /// مجموعه‌ای از موجودیت‌های جدید را به واحد کار اضافه می‌کند. تا زمان فراخوانی ذخیره، تغییرات ماندگار نمی‌شوند.
     /// </summary>
-    /// <param name="entities">The entities to add.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="entities">موجودیت‌هایی که باید اضافه شوند.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Marks an existing entity as modified.
+    /// موجودیت موجود را به‌عنوان تغییریافته علامت می‌زند.
     /// </summary>
-    /// <param name="entity">The entity to update.</param>
+    /// <param name="entity">موجودیتی که باید به‌روزرسانی شود.</param>
     void Update(TEntity entity);
 
     /// <summary>
-    /// Marks an existing entity for deletion.
+    /// موجودیت موجود را برای حذف علامت می‌زند.
     /// </summary>
-    /// <param name="entity">The entity to remove.</param>
+    /// <param name="entity">موجودیتی که باید حذف شود.</param>
     void Remove(TEntity entity);
 
     /// <summary>
-    /// Marks a range of existing entities for deletion.
+    /// مجموعه‌ای از موجودیت‌های موجود را برای حذف علامت می‌زند.
     /// </summary>
-    /// <param name="entities">The entities to remove.</param>
+    /// <param name="entities">موجودیت‌هایی که باید حذف شوند.</param>
     void RemoveRange(IEnumerable<TEntity> entities);
 }

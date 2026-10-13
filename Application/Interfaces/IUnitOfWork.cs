@@ -3,64 +3,64 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Application.Interfaces;
 
 /// <summary>
-/// Aggregates all repositories plus a single SaveChanges and transaction boundary,
-/// so a service can coordinate several repositories atomically without knowing EF Core.
+/// همه‌ی مخزن‌ها را به همراه یک SaveChanges واحد و مرز تراکنش جمع می‌کند،
+/// تا یک سرویس بتواند چند مخزن را به‌صورت اتمیک هماهنگ کند بدون اینکه EF Core را بشناسد.
 /// </summary>
 public interface IUnitOfWork : IDisposable
 {
     /// <summary>
-    /// Gets the repository for customer entities.
+    /// مخزن موجودیت‌های مشتری را برمی‌گرداند.
     /// </summary>
     ICustomerRepository Customers { get; }
 
     /// <summary>
-    /// Gets the repository for product entities.
+    /// مخزن موجودیت‌های محصول را برمی‌گرداند.
     /// </summary>
     IProductRepository Products { get; }
 
     /// <summary>
-    /// Gets the repository for order entities.
+    /// مخزن موجودیت‌های سفارش را برمی‌گرداند.
     /// </summary>
     IOrderRepository Orders { get; }
 
     /// <summary>
-    /// Gets the repository for order item entities.
+    /// مخزن موجودیت‌های ردیف سفارش را برمی‌گرداند.
     /// </summary>
     IOrderItemRepository OrderItems { get; }
 
     /// <summary>
-    /// Gets the repository for application user entities.
+    /// مخزن موجودیت‌های کاربر برنامه را برمی‌گرداند.
     /// </summary>
     IUserRepository Users { get; }
 
     /// <summary>
-    /// Gets the repository for refresh token entities.
+    /// مخزن موجودیت‌های توکن refresh را برمی‌گرداند.
     /// </summary>
     IRefreshTokenRepository RefreshTokens { get; }
 
     /// <summary>
-    /// Persists all pending changes made through the repositories.
+    /// همه‌ی تغییرات معلق انجام‌شده از طریق مخزن‌ها را ذخیره می‌کند.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The number of state entries written to the store.</returns>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>تعداد ورودی‌های وضعیت نوشته‌شده در ذخیره‌گاه.</returns>
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Begins a new database transaction. Must be paired with
-    /// <see cref="CommitAsync"/> or <see cref="RollbackAsync"/>.
+    /// یک تراکنش پایگاه داده‌ی جدید آغاز می‌کند. باید با
+    /// <see cref="CommitAsync"/> یا <see cref="RollbackAsync"/> جفت شود.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Commits the current database transaction.
+    /// تراکنش پایگاه داده‌ی فعلی را commit می‌کند.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task CommitAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Rolls back the current database transaction.
+    /// تراکنش پایگاه داده‌ی فعلی را rollback می‌کند.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task RollbackAsync(CancellationToken cancellationToken = default);
 }

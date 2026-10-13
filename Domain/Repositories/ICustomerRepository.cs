@@ -3,32 +3,32 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Domain.Repositories;
 
 /// <summary>
-/// Repository contract for <see cref="Customer"/> entities.
+/// قرارداد مخزن برای موجودیت‌های <see cref="Customer"/>.
 /// </summary>
 public interface ICustomerRepository : IRepository<Customer, Guid>
 {
     /// <summary>
-    /// Gets a customer by their unique email address, or <c>null</c> when no such customer exists.
+    /// مشتری را بر اساس ایمیل یکتایش برمی‌گرداند، یا اگر چنین مشتری‌ای وجود نداشته باشد <c>null</c>.
     /// </summary>
-    /// <param name="email">The email address to look up.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="email">آدرس ایمیلی که باید جست‌وجو شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<Customer?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Determines whether a customer with the given email address already exists.
+    /// تعیین می‌کند که آیا مشتری‌ای با این ایمیل از قبل وجود دارد یا نه.
     /// </summary>
-    /// <param name="email">The email address to check.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="email">آدرس ایمیلی که باید بررسی شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a page of customers, optionally filtered by a free-text search term
-    /// matched against name and email.
+    /// صفحه‌ای از مشتریان را برمی‌گرداند، به‌صورت اختیاری با فیلتر جست‌وجوی متنی آزاد
+    /// که روی نام و ایمیل تطبیق داده می‌شود.
     /// </summary>
-    /// <param name="searchTerm">Optional search term; <c>null</c> or empty returns all customers.</param>
-    /// <param name="pageNumber">The 1-based page number.</param>
-    /// <param name="pageSize">The number of items per page.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="searchTerm">عبارت جست‌وجوی اختیاری؛ اگر <c>null</c> یا خالی باشد همه‌ی مشتریان برمی‌گردند.</param>
+    /// <param name="pageNumber">شماره‌ی صفحه که از ۱ شروع می‌شود.</param>
+    /// <param name="pageSize">تعداد اقلام در هر صفحه.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<PagedEntities<Customer>> GetPagedAsync(
         string? searchTerm,
         int pageNumber,

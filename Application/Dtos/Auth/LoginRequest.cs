@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Auth;
 
 /// <summary>
-/// Payload for signing in with email and password.
+/// بدنه‌ی درخواست برای ورود با ایمیل و گذرواژه.
 /// </summary>
 public class LoginRequest
 {
     /// <summary>
-    /// Gets or sets the email address of the account.
+    /// آدرس ایمیل حساب را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [EmailAddress]
@@ -16,7 +16,7 @@ public class LoginRequest
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the plain text password to verify.
+    /// گذرواژه‌ی متنی ساده‌ای که باید تأیید شود را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(100)]

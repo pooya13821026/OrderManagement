@@ -10,17 +10,17 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Application.Services;
 
 /// <summary>
-/// Implements product catalog management: creation with SKU uniqueness, paged retrieval,
-/// update, delete and stock adjustment. All persistence goes through <see cref="IUnitOfWork"/>.
+/// پیاده‌سازی مدیریت کاتالوگ محصولات: ایجاد با یکتایی SKU، بازیابی صفحه‌بندی‌شده،
+/// به‌روزرسانی، حذف و تنظیم موجودی. همه‌ی ذخیره‌سازی از طریق <see cref="IUnitOfWork"/> انجام می‌شود.
 /// </summary>
 public class ProductService : IProductService
 {
     private readonly IUnitOfWork _unitOfWork;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ProductService"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="ProductService"/> می‌سازد.
     /// </summary>
-    /// <param name="unitOfWork">The unit of work used for all persistence.</param>
+    /// <param name="unitOfWork">واحد کاری که برای همه‌ی ذخیره‌سازی‌ها استفاده می‌شود.</param>
     public ProductService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -34,21 +34,21 @@ public class ProductService : IProductService
 
         string normalizedSku = request.Sku.Trim();
 
-        // Best-effort duplicate guard; the unique index in the database remains the
-        // authoritative protection against concurrent inserts.
+        // نگهبان تکراری به‌صورت best-effort؛ ایندکس یکتای دیتابیس همچنان حافظ
+        // مقتدرانه در برابر درج‌های همزمان است.
         if (await _unitOfWork.Products.ExistsBySkuAsync(normalizedSku, cancellationToken))
         {
-            throw new DuplicateEntityException(nameof(Product), $"A product with SKU '{normalizedSku}' already exists.");
+            throw new DuplicateEntityException(nameof(Product), $"محصولی با SKU '{normalizedSku}' از قبل وجود دارد.");
         }
 
         if (request.Price <= 0)
         {
-            throw new DomainException("Product price must be greater than zero.");
+            throw new DomainException("قیمت محصول باید بزرگ‌تر از صفر باشد.");
         }
 
         if (request.StockQuantity < 0)
         {
-            throw new DomainException("Product stock quantity must not be negative.");
+            throw new DomainException("موجودی محصول نباید منفی باشد.");
         }
 
         DateTime now = DateTime.UtcNow;
@@ -111,14 +111,14 @@ public class ProductService : IProductService
 
         if (request.Price <= 0)
         {
-            throw new DomainException("Product price must be greater than zero.");
+            throw new DomainException("قیمت محصول باید بزرگ‌تر از صفر باشد.");
         }
 
         string normalizedSku = request.Sku.Trim();
         if (!string.Equals(product.Sku, normalizedSku, StringComparison.OrdinalIgnoreCase)
             && await _unitOfWork.Products.ExistsBySkuAsync(normalizedSku, cancellationToken))
         {
-            throw new DuplicateEntityException(nameof(Product), $"A product with SKU '{normalizedSku}' already exists.");
+            throw new DuplicateEntityException(nameof(Product), $"محصولی با SKU '{normalizedSku}' از قبل وجود دارد.");
         }
 
         product.Name = request.Name.Trim();
@@ -153,7 +153,7 @@ public class ProductService : IProductService
 
         if (quantityChange == 0)
         {
-            throw new DomainException("Quantity change must not be zero.");
+            throw new DomainException("تغییر تعداد نباید صفر باشد.");
         }
 
         Product product = await _unitOfWork.Products.GetByIdAsync(productId, cancellationToken)
@@ -162,7 +162,7 @@ public class ProductService : IProductService
         int resultingQuantity = product.StockQuantity + quantityChange;
         if (resultingQuantity < 0)
         {
-            // quantityChange is negative here, so the absolute withdrawal is -quantityChange.
+            // quantityChange در اینجا منفی است، پس برداشت مطلق -quantityChange است.
             throw new InsufficientStockException(productId, product.StockQuantity, -quantityChange);
         }
 

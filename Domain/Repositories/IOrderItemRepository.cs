@@ -3,7 +3,7 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Domain.Repositories;
 
 /// <summary>
-/// Repository contract for <see cref="OrderItem"/> entities.
+/// قرارداد مخزن برای موجودیت‌های <see cref="OrderItem"/>.
 /// </summary>
 public interface IOrderItemRepository : IRepository<OrderItem, Guid>
 {

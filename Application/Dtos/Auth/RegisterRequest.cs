@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Auth;
 
 /// <summary>
-/// Payload for creating a new user account.
+/// بدنه‌ی درخواست برای ایجاد یک حساب کاربری جدید.
 /// </summary>
 public class RegisterRequest
 {
     /// <summary>
-    /// Gets or sets the email address of the new account. Unique.
+    /// آدرس ایمیل حساب جدید را می‌گیرد یا تنظیم می‌کند. یکتاست.
     /// </summary>
     [Required]
     [EmailAddress]
@@ -16,7 +16,7 @@ public class RegisterRequest
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the plain text password. Hashed before storage; never persisted as-is.
+    /// گذرواژه‌ی متنی ساده را می‌گیرد یا تنظیم می‌کند. پیش از ذخیره هش می‌شود؛ هرگز به همان صورت ذخیره نمی‌شود.
     /// </summary>
     [Required]
     [MinLength(8)]
@@ -24,21 +24,21 @@ public class RegisterRequest
     public string Password { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the first name of the user.
+    /// نام کاربر را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(100)]
     public string FirstName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the last name of the user.
+    /// نام خانوادگی کاربر را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(100)]
     public string LastName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the optional phone number of the user.
+    /// شماره تلفن اختیاری کاربر را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Phone]
     [MaxLength(20)]

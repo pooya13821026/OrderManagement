@@ -1,27 +1,27 @@
 namespace OrderManagement.Application.Dtos.Auth;
 
 /// <summary>
-/// Result of a successful authentication operation (register, login or refresh).
+/// نتیجه‌ی یک عملیات احراز هویت موفق (ثبت‌نام، ورود یا refresh).
 /// </summary>
 public class AuthResponse
 {
     /// <summary>
-    /// Gets or sets the signed JWT access token.
+    /// توکن دسترسی JWT امضاشده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string AccessToken { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the raw refresh token. Only its hash is stored server side.
+    /// توکن refresh خام را می‌گیرد یا تنظیم می‌کند. فقط هش آن در سمت سرور ذخیره می‌شود.
     /// </summary>
     public string RefreshToken { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the UTC expiry moment of the access token.
+    /// زمان انقضای UTC توکن دسترسی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime ExpiresAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the authenticated user's profile information.
+    /// اطلاعات پروفایل کاربر احراز هویت‌شده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public UserDto User { get; set; } = null!;
 }

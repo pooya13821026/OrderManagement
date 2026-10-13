@@ -3,73 +3,73 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Domain.Entities;
 
 /// <summary>
-/// Represents a customer order containing one or more order items.
-/// The order number has the format <c>ORD-yyyyMMdd-xxxxxx</c> and is unique.
+/// نماینده‌ی یک سفارش مشتری است که شامل یک یا چند ردیف سفارش می‌شود.
+/// شماره سفارش قالب <c>ORD-yyyyMMdd-xxxxxx</c> را دارد و یکتاست.
 /// </summary>
 public class Order
 {
     /// <summary>
-    /// Unique identifier of the order.
+    /// شناسه‌ی یکتای سفارش.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Identifier of the customer who placed the order.
+    /// شناسه‌ی مشتری‌ای که سفارش را ثبت کرده است.
     /// </summary>
     public Guid CustomerId { get; set; }
 
     /// <summary>
-    /// Human readable unique order number, format <c>ORD-yyyyMMdd-xxxxxx</c>.
+    /// شماره‌ی یکتای سفارش به‌صورت خوانا، با قالب <c>ORD-yyyyMMdd-xxxxxx</c>.
     /// </summary>
     public string OrderNumber { get; set; } = string.Empty;
 
     /// <summary>
-    /// Current lifecycle status of the order.
+    /// وضعیت جاری چرخه‌ی حیات سفارش.
     /// </summary>
     public OrderStatus Status { get; set; }
 
     /// <summary>
-    /// UTC timestamp when the order was placed.
+    /// زمان‌نشان UTC هنگام ثبت سفارش.
     /// </summary>
     public DateTime OrderDate { get; set; }
 
     /// <summary>
-    /// Sum of all item line totals at the time the order was placed.
+    /// مجموع کل ردیف‌ها در زمان ثبت سفارش.
     /// </summary>
     public decimal TotalAmount { get; set; }
 
     /// <summary>
-    /// Optional shipping address, may differ from the customer's address.
+    /// آدرس ارسال اختیاری؛ ممکن است با آدرس مشتری متفاوت باشد.
     /// </summary>
     public string? ShippingAddress { get; set; }
 
     /// <summary>
-    /// Optional free-form notes attached to the order.
+    /// یادداشت‌های آزاد اختیاری که به سفارش پیوست شده‌اند.
     /// </summary>
     public string? Notes { get; set; }
 
     /// <summary>
-    /// UTC timestamp when the order record was created.
+    /// زمان‌نشان UTC هنگام ایجاد رکورد سفارش.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// UTC timestamp of the last update of the order record.
+    /// زمان‌نشان UTC آخرین به‌روزرسانی رکورد سفارش.
     /// </summary>
     public DateTime UpdatedAt { get; set; }
 
     /// <summary>
-    /// Concurrency token managed by Entity Framework. A mismatch indicates a concurrent modification.
+    /// توکن همزمانی که توسط Entity Framework مدیریت می‌شود. ناهماهنگی آن نشان‌دهنده‌ی تغییر همزمان است.
     /// </summary>
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
     /// <summary>
-    /// Navigation property to the customer who placed the order.
+    /// پروپرتی ناوبری به مشتری‌ای که سفارش را ثبت کرده است.
     /// </summary>
     public Customer Customer { get; set; } = null!;
 
     /// <summary>
-    /// Collection of items contained in this order.
+    /// مجموعه‌ی اقلام موجود در این سفارش.
     /// </summary>
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }

@@ -1,54 +1,54 @@
 namespace OrderManagement.Domain.Entities;
 
 /// <summary>
-/// Represents a stored refresh token. Only the hash of the token is persisted;
-/// the raw token is returned to the client exactly once at issuance.
+/// نماینده‌ی یک توکن refresh ذخیره‌شده است. فقط هش توکن ذخیره می‌شود؛
+/// توکن خام دقیقاً یک بار هنگام صدور به کلاینت برمی‌گردد.
 /// </summary>
 public class RefreshToken
 {
     /// <summary>
-    /// Unique identifier of the stored refresh token record.
+    /// شناسه‌ی یکتای رکورد توکن refresh ذخیره‌شده.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Identifier of the user the token belongs to.
+    /// شناسه‌ی کاربری که توکن به او تعلق دارد.
     /// </summary>
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// Hash of the issued refresh token. Unique across all records.
+    /// هش توکن refresh صادرشده. در میان همه‌ی رکوردها یکتاست.
     /// </summary>
     public string TokenHash { get; set; } = string.Empty;
 
     /// <summary>
-    /// UTC moment after which the token is no longer valid.
+    /// زمان UTC که پس از آن توکن دیگر معتبر نیست.
     /// </summary>
     public DateTime ExpiresAt { get; set; }
 
     /// <summary>
-    /// UTC moment when the token record was created.
+    /// زمان UTC هنگام ایجاد رکورد توکن.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// UTC moment when the token was revoked, or <c>null</c> while it is still active.
+    /// زمان UTC هنگام ابطال توکن، یا <c>null</c> تا زمانی که همچنان فعال است.
     /// </summary>
     public DateTime? RevokedAt { get; set; }
 
     /// <summary>
-    /// Hash of the token that replaced this one during rotation, or <c>null</c> if not rotated.
+    /// هش توکنی که هنگام چرخه (rotation) جایگزین این توکن شده، یا <c>null</c> اگر چرخه‌ای رخ نداده باشد.
     /// </summary>
     public string? ReplacedByTokenHash { get; set; }
 
     /// <summary>
-    /// Gets a value indicating whether the token is currently usable
-    /// (never revoked and not yet expired).
+    /// مقداری برمی‌گرداند که نشان می‌دهد توکن در حال حاضر قابل استفاده است
+    /// (هرگز ابطال نشده و هنگام انقضا نرسیده است).
     /// </summary>
     public bool IsActive => RevokedAt is null && DateTime.UtcNow < ExpiresAt;
 
     /// <summary>
-    /// Navigation property to the owning user account.
+    /// پروپرتی ناوبری به حساب کاربری مالک توکن.
     /// </summary>
     public ApplicationUser User { get; set; } = null!;
 }

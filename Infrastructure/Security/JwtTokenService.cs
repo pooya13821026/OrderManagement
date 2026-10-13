@@ -10,20 +10,20 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Infrastructure.Security;
 
 /// <summary>
-/// Issues HMAC-SHA256 signed JWT access tokens and the refresh token helpers used by the
-/// authentication service. Reads its settings from the <c>Jwt</c> configuration section
-/// (<c>Key</c>, <c>Issuer</c>, <c>Audience</c>, <c>AccessTokenMinutes</c>); only the
-/// signing key is mandatory.
+/// توکن‌های دسترسی JWT امضاشده با HMAC-SHA256 و کمک‌کننده‌های توکن refresh مورد استفاده‌ی
+/// سرویس احراز هویت را صادر می‌کند. تنظیمات خود را از بخش پیکربندی <c>Jwt</c>
+/// (<c>Key</c>، <c>Issuer</c>، <c>Audience</c>، <c>AccessTokenMinutes</c>) می‌خواند؛ فقط
+/// کلید امضا الزامی است.
 /// </summary>
 public sealed class JwtTokenService : ITokenService
 {
     /// <summary>
-    /// Access token lifetime used when <c>Jwt:AccessTokenMinutes</c> is missing or invalid.
+    /// طول عمر توکن دسترسی که وقتی <c>Jwt:AccessTokenMinutes</c> غایب یا نامعتبر باشد استفاده می‌شود.
     /// </summary>
     private const int DefaultAccessTokenMinutes = 15;
 
     /// <summary>
-    /// Number of random bytes behind a raw refresh token (512 bits of entropy).
+    /// تعداد بایت‌های تصادفی پشت یک توکن refresh خام (۵۱۲ بیت آنتروپی).
     /// </summary>
     private const int RefreshTokenByteCount = 64;
 
@@ -33,11 +33,11 @@ public sealed class JwtTokenService : ITokenService
     private readonly int _accessTokenMinutes;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="JwtTokenService"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="JwtTokenService"/> می‌سازد.
     /// </summary>
-    /// <param name="configuration">The application configuration; the <c>Jwt</c> section is read.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="configuration"/> is <c>null</c>.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when <c>Jwt:Key</c> is missing or blank.</exception>
+    /// <param name="configuration">پیکربندی برنامه؛ بخش <c>Jwt</c> خوانده می‌شود.</param>
+    /// <exception cref="ArgumentNullException">وقتی <paramref name="configuration"/> برابر <c>null</c> باشد پرتاب می‌شود.</exception>
+    /// <exception cref="InvalidOperationException">وقتی <c>Jwt:Key</c> غایب یا خالی باشد پرتاب می‌شود.</exception>
     public JwtTokenService(IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -47,8 +47,8 @@ public sealed class JwtTokenService : ITokenService
         _key = section["Key"] ?? string.Empty;
         if (string.IsNullOrWhiteSpace(_key))
         {
-            // Never fall back to a built-in secret: a missing key is a configuration error.
-            throw new InvalidOperationException("Missing required configuration value 'Jwt:Key'.");
+            // هرگز به یک secret داخلی برنگردید: نبودن کلید یک خطای پیکربندی است.
+            throw new InvalidOperationException("مقدار پیکربندی الزامی 'Jwt:Key' وجود ندارد.");
         }
 
         _issuer = section["Issuer"] ?? "OrderManagement";
@@ -64,8 +64,8 @@ public sealed class JwtTokenService : ITokenService
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        // Short, standard claim names: sub/email/given_name/family_name/jti are emitted
-        // as-is; "role" is the conventional role claim read back by the API middleware.
+        // نام‌های claim کوتاه و استاندارد: sub/email/given_name/family_name/jti همان
+        // طور که هستند منتشر می‌شوند؛ "role" claim رسمی نقش است که middleware های API می‌خوانند.
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
@@ -92,7 +92,7 @@ public sealed class JwtTokenService : ITokenService
     /// <inheritdoc />
     public string GenerateRefreshToken()
     {
-        // Cryptographically random, unguessable token; only its hash is ever stored.
+        // توکنی تصادفی در سطح رمزنگاری و غیرقابل حدس؛ فقط هش آن ذخیره می‌شود.
         byte[] randomBytes = RandomNumberGenerator.GetBytes(RefreshTokenByteCount);
         return Convert.ToBase64String(randomBytes);
     }
@@ -102,14 +102,14 @@ public sealed class JwtTokenService : ITokenService
     {
         ArgumentException.ThrowIfNullOrEmpty(token);
 
-        // SHA256 hex digest: fixed size, unique-index friendly, and safe to persist even
-        // though the token itself already has high entropy.
+        // دیجست hex از SHA256: اندازه‌ی ثابت، سازگار با ایندکس یکتا، و امن برای ذخیره‌سازی حتی
+        // با اینکه خودِ توکن آنتروپی بالایی دارد.
         byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
         return Convert.ToHexString(hash);
     }
 
     /// <inheritdoc />
-    /// <exception cref="SecurityTokenException">Thrown when the signature, issuer or audience is invalid.</exception>
+    /// <exception cref="SecurityTokenException">وقتی امضا، issuer یا audience نامعتبر باشد پرتاب می‌شود.</exception>
     public ClaimsPrincipal GetPrincipalFromExpiredToken(string token)
     {
         ArgumentException.ThrowIfNullOrEmpty(token);
@@ -122,8 +122,8 @@ public sealed class JwtTokenService : ITokenService
             ValidAudience = _audience,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_key)),
-            // The whole point of a refresh: an expired access token must still be readable,
-            // but only its signature proves it really was issued by this server.
+            // نکته‌ی اصلی refresh: یک توکن دسترسی منقضی‌شده باید همچنان قابل خواندن باشد،
+            // اما فقط امضای آن ثابت می‌کند که واقعاً توسط همین سرور صادر شده است.
             ValidateLifetime = false,
             ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
             ClockSkew = TimeSpan.Zero

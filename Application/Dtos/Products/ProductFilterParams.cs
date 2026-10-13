@@ -3,17 +3,17 @@ using OrderManagement.Application.Common;
 namespace OrderManagement.Application.Dtos.Products;
 
 /// <summary>
-/// Filter inputs for paging through the product catalog.
+/// ورودی‌های فیلتر برای صفحه‌بندی کاتالوگ محصولات.
 /// </summary>
 public class ProductFilterParams : PaginationParams
 {
     /// <summary>
-    /// Gets or sets an optional free-text search term matched against product name and SKU.
+    /// عبارت جست‌وجوی متنی آزاد اختیاری که روی نام محصول و SKU تطبیق داده می‌شود را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? SearchTerm { get; set; }
 
     /// <summary>
-    /// Gets or sets an optional active flag filter; <c>null</c> returns both active and inactive products.
+    /// فیلتر اختیاری پرچم فعال بودن را می‌گیرد یا تنظیم می‌کند؛ <c>null</c> هم محصولات فعال و هم غیرفعال را برمی‌گرداند.
     /// </summary>
     public bool? IsActive { get; set; }
 }

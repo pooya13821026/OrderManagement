@@ -4,12 +4,12 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Payload for transitioning an order to a new status.
+/// بدنه‌ی درخواست برای گذاردن سفارش در یک وضعیت جدید.
 /// </summary>
 public class UpdateOrderStatusRequest
 {
     /// <summary>
-    /// Gets or sets the requested new status of the order.
+    /// وضعیت جدید درخواستی سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     public OrderStatus NewStatus { get; set; }

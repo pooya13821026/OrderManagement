@@ -1,22 +1,22 @@
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Result of a bulk order creation operation, including a per-order outcome.
+/// نتیجه‌ی یک عملیات ایجاد گروهی سفارش، شامل نتیجه‌ی هر سفارش.
 /// </summary>
 public class BulkCreateOrdersResponse
 {
     /// <summary>
-    /// Gets or sets the number of orders that were created successfully.
+    /// تعداد سفارش‌هایی که با موفقیت ایجاد شدند را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public int SuccessfulCount { get; set; }
 
     /// <summary>
-    /// Gets or sets the number of orders that failed validation or persistence.
+    /// تعداد سفارش‌هایی که در اعتبارسنجی یا ذخیره‌سازی ناموفق بودند را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public int FailedCount { get; set; }
 
     /// <summary>
-    /// Gets or sets the per-order results in the same order as the input list.
+    /// نتایج هر سفارش را به همان ترتیب فهرست ورودی می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public IReadOnlyList<BulkOrderResultItem> Results { get; set; } = Array.Empty<BulkOrderResultItem>();
 }

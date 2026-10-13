@@ -8,11 +8,11 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Api.Controllers;
 
 /// <summary>
-/// Customer management endpoints: create, paged search, retrieval, update and delete.
+/// نقطه‌پایان‌های مدیریت مشتریان: ایجاد، جست‌وجوی صفحه‌بندی‌شده، بازیابی، به‌روزرسانی و حذف.
 /// </summary>
 /// <remarks>
-/// Reading is open to any authenticated user; write operations (POST, PUT, DELETE) are
-/// restricted to administrators via an additional role requirement.
+/// خواندن برای هر کاربر احرازهویت‌شده باز است؛ عملیات نوشتن (POST، PUT، DELETE) از طریق
+/// یک الزام نقش اضافی فقط به مدیران محدود شده است.
 /// </remarks>
 [ApiController]
 [Route("api/[controller]")]
@@ -23,26 +23,26 @@ public class CustomersController : ControllerBase
     private readonly ICustomerService _customerService;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="CustomersController"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="CustomersController"/> می‌سازد.
     /// </summary>
-    /// <param name="customerService">The customer service.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="customerService"/> is <c>null</c>.</exception>
+    /// <param name="customerService">سرویس مشتریان.</param>
+    /// <exception cref="ArgumentNullException">وقتی <paramref name="customerService"/> برابر <c>null</c> باشد پرتاب می‌شود.</exception>
     public CustomersController(ICustomerService customerService)
     {
         _customerService = customerService ?? throw new ArgumentNullException(nameof(customerService));
     }
 
     /// <summary>
-    /// Creates a new customer. Administrators only.
+    /// یک مشتری جدید ایجاد می‌کند. فقط مدیران.
     /// </summary>
-    /// <param name="request">The customer creation payload.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The created customer.</returns>
-    /// <response code="201">The customer was created.</response>
-    /// <response code="400">The payload failed validation.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">The caller is not an administrator.</response>
-    /// <response code="409">The email address is already taken.</response>
+    /// <param name="request">payload ایجاد مشتری.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>مشتری ایجادشده.</returns>
+    /// <response code="201">مشتری ایجاد شد.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
+    /// <response code="409">آدرس ایمیل قبلاً اشغال شده است.</response>
     [HttpPost]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status201Created)]
@@ -59,15 +59,15 @@ public class CustomersController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a filtered, paginated page of customers.
+    /// یک صفحه‌ی فیلترشده و صفحه‌بندی‌شده از مشتریان دریافت می‌کند.
     /// </summary>
-    /// <param name="parameters">Query parameters <c>pageNumber</c> and <c>pageSize</c>.</param>
-    /// <param name="searchTerm">Optional free-text term matched against name and email.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The requested page of customers.</returns>
-    /// <response code="200">The page was returned.</response>
-    /// <response code="400">A query parameter was invalid.</response>
-    /// <response code="401">No valid access token was presented.</response>
+    /// <param name="parameters">پارامترهای پرس‌وجو <c>pageNumber</c> و <c>pageSize</c>.</param>
+    /// <param name="searchTerm">عبارت اختیاری که با نام و ایمیل مقایسه می‌شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>صفحه‌ی درخواستی مشتریان.</returns>
+    /// <response code="200">صفحه برگردانده شد.</response>
+    /// <response code="400">یک پارامتر پرس‌وجو نامعتبر بود.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<CustomerDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -86,14 +86,14 @@ public class CustomersController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a single customer by identifier.
+    /// یک مشتری را بر اساس شناسه دریافت می‌کند.
     /// </summary>
-    /// <param name="id">The customer identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The requested customer.</returns>
-    /// <response code="200">The customer was returned.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="404">No customer with the given identifier exists.</response>
+    /// <param name="id">شناسه‌ی مشتری.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>مشتری درخواستی.</returns>
+    /// <response code="200">مشتری برگردانده شد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="404">مشتری‌ای با این شناسه وجود ندارد.</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -105,18 +105,18 @@ public class CustomersController : ControllerBase
     }
 
     /// <summary>
-    /// Updates an existing customer. Administrators only.
+    /// یک مشتری موجود را به‌روزرسانی می‌کند. فقط مدیران.
     /// </summary>
-    /// <param name="id">The customer identifier.</param>
-    /// <param name="request">The customer update payload.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The updated customer.</returns>
-    /// <response code="200">The customer was updated.</response>
-    /// <response code="400">The payload failed validation.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">The caller is not an administrator.</response>
-    /// <response code="404">No customer with the given identifier exists.</response>
-    /// <response code="409">The email address is already taken.</response>
+    /// <param name="id">شناسه‌ی مشتری.</param>
+    /// <param name="request">payload به‌روزرسانی مشتری.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>مشتری به‌روزرسانی‌شده.</returns>
+    /// <response code="200">مشتری به‌روزرسانی شد.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
+    /// <response code="404">مشتری‌ای با این شناسه وجود ندارد.</response>
+    /// <response code="409">آدرس ایمیل قبلاً اشغال شده است.</response>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
@@ -135,15 +135,15 @@ public class CustomersController : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a customer. Administrators only.
+    /// یک مشتری را حذف می‌کند. فقط مدیران.
     /// </summary>
-    /// <param name="id">The customer identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>No content on success.</returns>
-    /// <response code="204">The customer was deleted.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">The caller is not an administrator.</response>
-    /// <response code="404">No customer with the given identifier exists.</response>
+    /// <param name="id">شناسه‌ی مشتری.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>در موفقیت بدون محتوا.</returns>
+    /// <response code="204">مشتری حذف شد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
+    /// <response code="404">مشتری‌ای با این شناسه وجود ندارد.</response>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

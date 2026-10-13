@@ -3,18 +3,18 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Payload describing a single line of a new order.
+/// بدنه‌ای که یک ردیف از یک سفارش جدید را توصیف می‌کند.
 /// </summary>
 public class CreateOrderItemRequest
 {
     /// <summary>
-    /// Gets or sets the identifier of the product being ordered.
+    /// شناسه‌ی محصولی که سفارش داده می‌شود را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     public Guid ProductId { get; set; }
 
     /// <summary>
-    /// Gets or sets the number of units to order. Must be greater than zero.
+    /// تعداد واحدهای درخواستی را می‌گیرد یا تنظیم می‌کند. باید بزرگ‌تر از صفر باشد.
     /// </summary>
     [Required]
     [Range(1, int.MaxValue)]

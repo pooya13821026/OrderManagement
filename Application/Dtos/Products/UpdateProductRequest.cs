@@ -3,40 +3,40 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Products;
 
 /// <summary>
-/// Payload for updating an existing product. Stock changes go through
-/// the separate stock adjustment operation, not through this request.
+/// بدنه‌ی درخواست برای به‌روزرسانی یک محصول موجود. تغییرات موجودی از طریق
+/// عملیات جداگانه‌ی تنظیم موجودی انجام می‌شود، نه از طریق این درخواست.
 /// </summary>
 public class UpdateProductRequest
 {
     /// <summary>
-    /// Gets or sets the display name of the product.
+    /// نام نمایشی محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the optional description of the product.
+    /// توضیحات اختیاری محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [MaxLength(2000)]
     public string? Description { get; set; }
 
     /// <summary>
-    /// Gets or sets the unit price of the product.
+    /// قیمت واحد محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [Range(0.01, double.MaxValue)]
     public decimal Price { get; set; }
 
     /// <summary>
-    /// Gets or sets the unique SKU code of the product.
+    /// کد SKU یکتای محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(50)]
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the product is active.
+    /// مقداری که نشان می‌دهد محصول فعال است را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public bool IsActive { get; set; } = true;
 }

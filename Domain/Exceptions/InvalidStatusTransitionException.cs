@@ -3,29 +3,29 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Domain.Exceptions;
 
 /// <summary>
-/// Thrown when a requested order status transition is not allowed by the business rules.
+/// هنگامی پرتاب می‌شود که گذار وضعیت سفارش درخواستی، توسط قواعد کسب‌وکار مجاز نباشد.
 /// </summary>
 public class InvalidStatusTransitionException : DomainException
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="InvalidStatusTransitionException"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="InvalidStatusTransitionException"/> می‌سازد.
     /// </summary>
-    /// <param name="currentStatus">The status the order currently has.</param>
-    /// <param name="requestedStatus">The status that was requested.</param>
+    /// <param name="currentStatus">وضعیت فعلی سفارش.</param>
+    /// <param name="requestedStatus">وضعیت درخواست‌شده.</param>
     public InvalidStatusTransitionException(OrderStatus currentStatus, OrderStatus requestedStatus)
-        : base($"Transition from '{currentStatus}' to '{requestedStatus}' is not allowed.")
+        : base($"گذار از '{currentStatus}' به '{requestedStatus}' مجاز نیست.")
     {
         CurrentStatus = currentStatus;
         RequestedStatus = requestedStatus;
     }
 
     /// <summary>
-    /// Gets the status the order currently has.
+    /// وضعیت فعلی سفارش را برمی‌گرداند.
     /// </summary>
     public OrderStatus CurrentStatus { get; }
 
     /// <summary>
-    /// Gets the status that was requested.
+    /// وضعیت درخواست‌شده را برمی‌گرداند.
     /// </summary>
     public OrderStatus RequestedStatus { get; }
 }

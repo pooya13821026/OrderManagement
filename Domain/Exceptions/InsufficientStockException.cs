@@ -1,19 +1,19 @@
 namespace OrderManagement.Domain.Exceptions;
 
 /// <summary>
-/// Thrown when an order cannot be confirmed because stock is insufficient for one of its items.
-/// No stock is decremented when this exception is raised.
+/// هنگامی پرتاب می‌شود که سفارش به دلیل ناکافی بودن موجودی یکی از اقلامش قابل تأیید نباشد.
+/// با پرتاب شدن این استثنا، هیچ موجودی کاهش داده نمی‌شود.
 /// </summary>
 public class InsufficientStockException : DomainException
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="InsufficientStockException"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="InsufficientStockException"/> می‌سازد.
     /// </summary>
-    /// <param name="productId">Identifier of the product with insufficient stock.</param>
-    /// <param name="available">Number of units currently available in stock.</param>
-    /// <param name="requested">Number of units that were requested.</param>
+    /// <param name="productId">شناسه‌ی محصولی که موجودی‌اش ناکافی است.</param>
+    /// <param name="available">تعداد واحدهای موجود در انبار.</param>
+    /// <param name="requested">تعداد واحدهای درخواست‌شده.</param>
     public InsufficientStockException(Guid productId, int available, int requested)
-        : base($"Insufficient stock for product '{productId}': {available} available, {requested} requested.")
+        : base($"موجودی محصول '{productId}' کافی نیست: {available} موجود، {requested} درخواست شده.")
     {
         ProductId = productId;
         Available = available;
@@ -21,17 +21,17 @@ public class InsufficientStockException : DomainException
     }
 
     /// <summary>
-    /// Gets the identifier of the product with insufficient stock.
+    /// شناسه‌ی محصولی که موجودی‌اش ناکافی است را برمی‌گرداند.
     /// </summary>
     public Guid ProductId { get; }
 
     /// <summary>
-    /// Gets the number of units currently available in stock.
+    /// تعداد واحدهای موجود در انبار را برمی‌گرداند.
     /// </summary>
     public int Available { get; }
 
     /// <summary>
-    /// Gets the number of units that were requested.
+    /// تعداد واحدهای درخواست‌شده را برمی‌گرداند.
     /// </summary>
     public int Requested { get; }
 }

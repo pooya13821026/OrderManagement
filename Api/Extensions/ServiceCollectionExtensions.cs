@@ -10,22 +10,22 @@ using Serilog;
 namespace OrderManagement.Api.Extensions;
 
 /// <summary>
-/// DI registration entry points for the API layer: MVC + Swagger, JWT bearer authentication,
-/// Serilog and the application service registrations.
+/// نقطه‌های ثبت DI لایه API: کنترلرهای MVC و Swagger، احراز هویت JWT حامل (Bearer)،
+/// Serilog و ثبت سرویس‌های اپلیکیشن.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds MVC controllers, Swagger (with the Bearer authorize button and XML comments),
-    /// JWT bearer authentication driven by the <c>Jwt</c> configuration section, authorization
-    /// and Serilog request/structural logging. The JWT settings are read from the same
-    /// section the <c>JwtTokenService</c> signs with, so issued and validated tokens always agree.
+    /// کنترلرهای MVC، Swagger (همراه با دکمه Authorize حامل و توضیحات XML)، احراز هویت
+    /// حامل JWT بر اساس بخش <c>Jwt</c> تنظیمات، مجوزدهی و لاگ ساخت‌یافته/درخواستی Serilog را
+    /// اضافه می‌کند. تنظیمات JWT از همان بخشی خوانده می‌شود که <c>JwtTokenService</c> با آن
+    /// امضا می‌کند، پس توکن صادرشده و اعتبارسنجی‌شده همیشه با هم سازگارند.
     /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="configuration">The application configuration; reads the <c>Jwt</c> section.</param>
-    /// <returns>The service collection, for chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when an argument is <c>null</c>.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when <c>Jwt:Key</c> is missing or blank.</exception>
+    /// <param name="services">کالکشن سرویس‌ها.</param>
+    /// <param name="configuration">تنظیمات اپلیکیشن؛ بخش <c>Jwt</c> را می‌خواند.</param>
+    /// <returns>کالکشن سرویس‌ها، برای زنجیره‌سازی.</returns>
+    /// <exception cref="ArgumentNullException">وقتی یکی از آرگومان‌ها <c>null</c> باشد پرتاب می‌شود.</exception>
+    /// <exception cref="InvalidOperationException">وقتی <c>Jwt:Key</c> خالی یا غایب باشد پرتاب می‌شود.</exception>
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -39,11 +39,11 @@ public static class ServiceCollectionExtensions
             {
                 Title = "Order Management API",
                 Version = "v1",
-                Description = "Orders, customers and products API secured with JWT bearer authentication."
+                Description = "ای‌پی‌آی سفارش‌ها، مشتریان و محصولات، محافظت‌شده با احراز هویت حامل JWT."
             });
 
-            // Adds the "Authorize" button to Swagger UI: paste a token, every request
-            // then carries the "Authorization: Bearer <token>" header.
+            // دکمه «Authorize» را به Swagger UI اضافه می‌کند: توکن را بچسبانید،
+            // آن‌گاه هر درخواست سربرگ «Authorization: Bearer <token>» را حمل می‌کند.
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
@@ -51,19 +51,17 @@ public static class ServiceCollectionExtensions
                 Scheme = "bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "JWT access token. Enter the raw token; the 'Bearer ' prefix is added by Swagger UI."
+                Description = "توکن دسترسی JWT. خود توکن خام را وارد کنید؛ پیشوند «Bearer » را خود Swagger UI اضافه می‌کند."
             });
 
-            // Adds the "Authorize" button to Swagger UI: paste a token, every request
-            // then carries the "Authorization: Bearer <token>" header. The requirement is
-            // resolved against the generated document so it points at the scheme above.
+            // نیازمندی امنیتی در برابر سند تولیدشده حل می‌شود تا به طرح تعریف‌شده بالا اشاره کند.
             options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
             {
                 { new OpenApiSecuritySchemeReference("Bearer", document), new List<string>() }
             });
 
-            // Publish inline XML documentation when a project generates it; the Api always
-            // does, the other layers only once GenerateDocumentationFile is enabled there.
+            // مستندات XML درون‌خطی را منتشر می‌کند وقتی پروژه‌ای آن را تولید کند؛ Api همیشه
+            // تولید می‌کند، لایه‌های دیگر فقط وقتی GenerateDocumentationFile فعال باشد.
             foreach (string fileName in new[] { "Api.xml", "Application.xml", "Domain.xml", "Infrastructure.xml" })
             {
                 string path = Path.Combine(AppContext.BaseDirectory, fileName);
@@ -78,7 +76,7 @@ public static class ServiceCollectionExtensions
         string issuer = jwtSection["Issuer"] ?? "OrderManagement";
         string audience = jwtSection["Audience"] ?? "OrderManagementClients";
         string key = jwtSection["Key"]
-            ?? throw new InvalidOperationException("Missing required configuration value 'Jwt:Key'.");
+            ?? throw new InvalidOperationException("مقدار الزامی تنظیمات 'Jwt:Key' یافت نشد.");
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -95,29 +93,29 @@ public static class ServiceCollectionExtensions
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromMinutes(1),
 
-                    // The tokens carry the role in the short "role" claim; the bearer
-                    // middleware maps it onto ClaimTypes.Role (inbound claim mapping), and
-                    // RoleClaimType tells [Authorize(Roles = ...)] where to read roles from.
+                    // توکن‌ها نقش را در ادعای کوتاه «role» حمل می‌کنند؛ میان‌افزار حامل آن را
+                    // روی ClaimTypes.Role می‌نگارد (نگاشت ورودی ادعا) و RoleClaimType به
+                    // [Authorize(Roles = ...)] می‌گوید نقش را از کجا بخواند.
                     RoleClaimType = ClaimTypes.Role
                 };
             });
 
         services.AddAuthorization();
 
-        // Serilog reads MinimumLevel/WriteTo (console + rolling file) from appsettings.json.
+        // لاگ Serilog سطوح حداقلی و مقصدها (کنسول و فایل چرخشی) را از appsettings.json می‌خواند.
         services.AddSerilog((_, loggerConfiguration) => loggerConfiguration.ReadFrom.Configuration(configuration));
 
         return services;
     }
 
     /// <summary>
-    /// Registers the application services (scoped) that the controllers depend on.
-    /// Their infrastructure dependencies (unit of work, repositories, token service) are
-    /// registered separately by <c>AddInfrastructure</c>.
+    /// سرویس‌های اپلیکیشن (محدوده درخواست) که کنترلرها به آن‌ها وابسته‌اند را ثبت می‌کند.
+    /// وابستگی‌های زیرساختی آن‌ها (واحد کار، ریپازیتوری‌ها، سرویس توکن) جداگانه با
+    /// <c>AddInfrastructure</c> ثبت می‌شوند.
     /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The service collection, for chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="services"/> is <c>null</c>.</exception>
+    /// <param name="services">کالکشن سرویس‌ها.</param>
+    /// <returns>کالکشن سرویس‌ها، برای زنجیره‌سازی.</returns>
+    /// <exception cref="ArgumentNullException">وقتی <paramref name="services"/> برابر <c>null</c> باشد پرتاب می‌شود.</exception>
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);

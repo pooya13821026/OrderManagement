@@ -3,72 +3,72 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Public projection of an order, including the customer summary and line items.
+/// نمای عمومی یک سفارش، شامل خلاصه‌ی مشتری و ردیف‌های سفارش.
 /// </summary>
 public class OrderDto
 {
     /// <summary>
-    /// Gets or sets the unique identifier of the order.
+    /// شناسه‌ی یکتای سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the unique human readable order number.
+    /// شماره‌ی یکتای خوانای سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string OrderNumber { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the identifier of the customer who placed the order.
+    /// شناسه‌ی مشتری‌ای که سفارش را ثبت کرده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid CustomerId { get; set; }
 
     /// <summary>
-    /// Gets or sets the full name of the customer who placed the order.
+    /// نام کامل مشتری‌ای که سفارش را ثبت کرده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string CustomerName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the email address of the customer who placed the order.
+    /// آدرس ایمیل مشتری‌ای که سفارش را ثبت کرده را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string CustomerEmail { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the current lifecycle status of the order.
+    /// وضعیت جاری چرخه‌ی حیات سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public OrderStatus Status { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC timestamp when the order was placed.
+    /// زمان‌نشان UTC هنگام ثبت سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime OrderDate { get; set; }
 
     /// <summary>
-    /// Gets or sets the total amount of the order.
+    /// مبلغ کل سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public decimal TotalAmount { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional shipping address.
+    /// آدرس ارسال اختیاری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? ShippingAddress { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional free-form notes.
+    /// یادداشت‌های آزاد اختیاری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? Notes { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC timestamp when the order was created.
+    /// زمان‌نشان UTC هنگام ایجاد سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the UTC timestamp of the last update.
+    /// زمان‌نشان UTC آخرین به‌روزرسانی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime UpdatedAt { get; set; }
 
     /// <summary>
-    /// Gets or sets the line items of the order.
+    /// ردیف‌های سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public IReadOnlyList<OrderItemDto> Items { get; set; } = Array.Empty<OrderItemDto>();
 }

@@ -5,8 +5,8 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Infrastructure.Persistence.Configurations;
 
 /// <summary>
-/// Maps <see cref="Customer"/> to the <c>Customers</c> table: required name and email,
-/// a unique email index and the optimistic-concurrency row version.
+/// <see cref="Customer"/> را روی جدول <c>Customers</c> نگاشت می‌کند: نام و ایمیل الزامی،
+/// ایندکس یکتای ایمیل و نسخه‌ی ردیف برای همزمانی خوش‌بینانه.
 /// </summary>
 public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
 {
@@ -24,11 +24,11 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(customer => customer.CreatedAt).IsRequired();
         builder.Property(customer => customer.UpdatedAt).IsRequired();
 
-        // Email uniqueness is enforced by the database; the service-level duplicate
-        // check is only a best effort guard against friendly error messages.
+        // یکتایی ایمیل توسط دیتابیس اعمال می‌شود؛ بررسی تکرار در سرویس فقط یک نگهبان
+        // تلاش‌محور برای پیام‌های خطای خوش‌زبان است.
         builder.HasIndex(customer => customer.Email).IsUnique();
 
-        // rowversion concurrency token: any concurrent update is detected on save.
+        // توکن همزمانی rowversion: هر به‌روزرسانی همزمان هنگام ذخیره شناسایی می‌شود.
         builder.Property(customer => customer.RowVersion).IsRowVersion();
     }
 }

@@ -5,57 +5,57 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Infrastructure.Persistence;
 
 /// <summary>
-/// Entity Framework Core database context for the order management store.
-/// Maps the Domain entities onto SQL Server tables, applies every
-/// <c>IEntityTypeConfiguration&lt;T&gt;</c> declared in this assembly and stamps
-/// UTC creation/modification timestamps before each save.
+/// کانتکست دیتابیس Entity Framework Core برای ذخیره‌سازی مدیریت سفارش‌ها.
+/// موجودیت‌های دامنه را روی جدول‌های SQL Server نگاشت می‌کند، همه‌ی
+/// <c>IEntityTypeConfiguration&lt;T&gt;</c> اعلام‌شده در این مونتاژ را اعمال می‌کند و
+/// پیش از هر ذخیره، زمان‌نشان‌های ایجاد/ویرایش UTC را ثبت می‌کند.
 /// </summary>
 public class OrderManagementDbContext : DbContext
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="OrderManagementDbContext"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="OrderManagementDbContext"/> می‌سازد.
     /// </summary>
-    /// <param name="options">The context options (provider and connection string).</param>
+    /// <param name="options">گزینه‌های کانتکست (provider و رشته‌ی اتصال).</param>
     public OrderManagementDbContext(DbContextOptions<OrderManagementDbContext> options)
         : base(options)
     {
     }
 
     /// <summary>
-    /// Gets the customers of the store.
+    /// مشتریان فروشگاه را دریافت می‌کند.
     /// </summary>
     public DbSet<Customer> Customers => Set<Customer>();
 
     /// <summary>
-    /// Gets the products of the catalog.
+    /// محصولات کاتالوگ را دریافت می‌کند.
     /// </summary>
     public DbSet<Product> Products => Set<Product>();
 
     /// <summary>
-    /// Gets the customer orders.
+    /// سفارش‌های مشتریان را دریافت می‌کند.
     /// </summary>
     public DbSet<Order> Orders => Set<Order>();
 
     /// <summary>
-    /// Gets the order line items.
+    /// ردیف‌های سفارش را دریافت می‌کند.
     /// </summary>
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     /// <summary>
-    /// Gets the application user accounts used for authentication.
+    /// حساب‌های کاربری برنامه که برای احراز هویت استفاده می‌شوند را دریافت می‌کند.
     /// </summary>
     public DbSet<ApplicationUser> Users => Set<ApplicationUser>();
 
     /// <summary>
-    /// Gets the stored refresh token hashes.
+    /// هش‌های ذخیره‌شده‌ی توکن refresh را دریافت می‌کند.
     /// </summary>
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     /// <summary>
-    /// Builds the model by applying the base conventions and then every entity type
-    /// configuration from this assembly, so all mapping lives next to the persistence code.
+    /// مدل را با اعمال قراردادهای پایه و سپس همه‌ی پیکربندی‌های نوع موجودیت
+    /// از این مونتاژ می‌سازد، بنابراین همه‌ی نگاشت‌ها کنار کد پایداری می‌ماند.
     /// </summary>
-    /// <param name="modelBuilder">The builder used to configure the model.</param>
+    /// <param name="modelBuilder">سازنده‌ای که برای پیکربندی مدل استفاده می‌شود.</param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -63,12 +63,12 @@ public class OrderManagementDbContext : DbContext
     }
 
     /// <summary>
-    /// Stamps <c>CreatedAt</c>/<c>UpdatedAt</c> with the current UTC time and then
-    /// persists all pending changes. Entities that already carry an explicit timestamp
-    /// keep it; every modified entity gets its <c>UpdatedAt</c> refreshed.
+    /// <c>CreatedAt</c>/<c>UpdatedAt</c> را با زمان فعلی UTC ثبت می‌کند و سپس
+    /// همه‌ی تغییرات معلق را ذخیره می‌کند. موجودیت‌هایی که از قبل زمان‌نشان صریح دارند
+    /// آن را نگه می‌دارند؛ هر موجودیت تغییریافته <c>UpdatedAt</c> خود را تازه می‌کند.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The number of state entries written to the store.</returns>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>تعداد ورودی‌های وضعیتی که در ذخیره‌سازی نوشته شده‌اند.</returns>
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         ApplyUtcTimestamps();
@@ -76,10 +76,10 @@ public class OrderManagementDbContext : DbContext
     }
 
     /// <summary>
-    /// Walks the change tracker and assigns UTC timestamps:
-    /// added entities get <c>CreatedAt</c> (and <c>UpdatedAt</c>) when the value was left
-    /// unset, modified entities get a fresh <c>UpdatedAt</c>. Entities without such a
-    /// property (for example <see cref="RefreshToken"/>) are skipped.
+    /// change tracker را طی می‌کند و زمان‌نشان‌های UTC را اختصاص می‌دهد:
+    /// موجودیت‌های افزوده‌شده وقتی مقدار تنظیم نشده باشد <c>CreatedAt</c> (و <c>UpdatedAt</c>)
+    /// می‌گیرند، موجودیت‌های تغییریافته <c>UpdatedAt</c> تازه می‌گیرند. موجودیت‌های بدون چنین
+    /// پروپرتی‌ای (برای نمونه <see cref="RefreshToken"/>) نادیده گرفته می‌شوند.
     /// </summary>
     private void ApplyUtcTimestamps()
     {
@@ -100,16 +100,17 @@ public class OrderManagementDbContext : DbContext
     }
 
     /// <summary>
-    /// Assigns <paramref name="value"/> to the given timestamp property when the entity type
-    /// declares it, optionally only when the current value is still the type default.
+    /// <paramref name="value"/> را به پروپرتی زمان‌نشان داده‌شده وقتی نوع موجودیت آن را
+    /// اعلام کرده باشد اختصاص می‌دهد، و به‌صورت اختیاری فقط وقتی مقدار فعلی هنوز مقدار
+    /// پیش‌فرض نوع است.
     /// </summary>
-    /// <param name="entry">The tracked entity.</param>
-    /// <param name="propertyName">The timestamp property name.</param>
-    /// <param name="value">The UTC timestamp to assign.</param>
-    /// <param name="onlyWhenUnset">Whether an already set value should be preserved.</param>
+    /// <param name="entry">موجودیت ردیابی‌شده.</param>
+    /// <param name="propertyName">نام پروپرتی زمان‌نشان.</param>
+    /// <param name="value">زمان‌نشان UTC که باید اختصاص یابد.</param>
+    /// <param name="onlyWhenUnset">آیا مقدار از قبل تنظیم‌شده باید حفظ شود.</param>
     private static void SetTimestampIfPresent(EntityEntry entry, string propertyName, DateTime value, bool onlyWhenUnset)
     {
-        // Not every entity has both timestamps (users and tokens have no UpdatedAt).
+        // هر موجودیتی هر دو زمان‌نشان را ندارد (کاربران و توکن‌ها UpdatedAt ندارند).
         if (entry.Metadata.FindProperty(propertyName) is null)
         {
             return;

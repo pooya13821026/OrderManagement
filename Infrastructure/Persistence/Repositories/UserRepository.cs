@@ -5,16 +5,16 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// EF Core implementation of <see cref="IUserRepository"/>. The email lookup feeds the
-/// sign-in flow (which updates and saves the user) and therefore returns tracked entities;
-/// the user-name lookup is display-only and runs with <c>AsNoTracking</c>.
+/// پیاده‌سازی EF Core برای <see cref="IUserRepository"/>. جست‌وجوی ایمیل جریان ورود به
+/// سیستم را تغذیه می‌کند (که کاربر را به‌روزرسانی و ذخیره می‌کند) و به همین دلیل موجودیت‌های
+/// tracked برمی‌گرداند؛ جست‌وجوی نام کاربری فقط برای نمایش است و با <c>AsNoTracking</c> اجرا می‌شود.
 /// </summary>
 public class UserRepository : EfRepository<ApplicationUser, Guid>, IUserRepository
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="UserRepository"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="UserRepository"/> می‌سازد.
     /// </summary>
-    /// <param name="context">The shared database context of the current scope.</param>
+    /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
     public UserRepository(OrderManagementDbContext context)
         : base(context)
     {
@@ -28,8 +28,8 @@ public class UserRepository : EfRepository<ApplicationUser, Guid>, IUserReposito
             return null;
         }
 
-        // Tracked on purpose: the sign-in flow updates LastLoginAt on the returned user
-        // and saves it; a detached copy would collide with an already tracked instance.
+        // عمداً tracked: جریان ورود LastLoginAt را روی کاربر برگردانده‌شده به‌روزرسانی و
+        // ذخیره می‌کند؛ یک نسخه‌ی detached با نمونه‌ی از قبل ردیابی‌شده تداخل پیدا می‌کند.
         return await Context.Users
             .FirstOrDefaultAsync(user => user.Email == email, cancellationToken);
     }

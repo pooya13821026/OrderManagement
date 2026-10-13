@@ -1,28 +1,27 @@
 namespace OrderManagement.Domain.Exceptions;
 
 /// <summary>
-/// Thrown when creating or updating an entity would violate a uniqueness constraint,
-/// for example a duplicate email address or SKU.
+/// هنگامی پرتاب می‌شود که ایجاد یا به‌روزرسانی یک موجودیت، قید یکتایی را نقض کند،
+/// برای نمونه تکراری بودن ایمیل یا کد SKU.
 /// </summary>
 public class DuplicateEntityException : DomainException
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="DuplicateEntityException"/> class
-    /// with a default message for the given entity.
+    /// نمونه‌ای جدید از کلاس <see cref="DuplicateEntityException"/> را با پیام پیش‌فرض
+    /// برای موجودیت داده‌شده می‌سازد.
     /// </summary>
-    /// <param name="entityName">Simple name of the entity type, for example <c>Customer</c>.</param>
+    /// <param name="entityName">نام ساده‌ی نوع موجودیت، برای نمونه <c>Customer</c>.</param>
     public DuplicateEntityException(string entityName)
-        : base($"{entityName} already exists.")
+        : base($"{entityName} از قبل وجود دارد.")
     {
         EntityName = entityName;
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="DuplicateEntityException"/> class
-    /// with a custom message.
+    /// نمونه‌ای جدید از کلاس <see cref="DuplicateEntityException"/> را با پیام سفارشی می‌سازد.
     /// </summary>
-    /// <param name="entityName">Simple name of the entity type, for example <c>Customer</c>.</param>
-    /// <param name="message">The message that describes the error.</param>
+    /// <param name="entityName">نام ساده‌ی نوع موجودیت، برای نمونه <c>Customer</c>.</param>
+    /// <param name="message">پیامی که خطا را توصیف می‌کند.</param>
     public DuplicateEntityException(string entityName, string message)
         : base(message)
     {
@@ -30,7 +29,7 @@ public class DuplicateEntityException : DomainException
     }
 
     /// <summary>
-    /// Gets the simple name of the entity type that caused the conflict.
+    /// نام ساده‌ی نوع موجودیتی که باعث تعارض شده را برمی‌گرداند.
     /// </summary>
     public string EntityName { get; }
 }

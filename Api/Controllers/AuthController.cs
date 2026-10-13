@@ -7,13 +7,13 @@ using OrderManagement.Application.Interfaces;
 namespace OrderManagement.Api.Controllers;
 
 /// <summary>
-/// Authentication endpoints: registration, sign-in, refresh token rotation, revocation
-/// and the current user's profile.
+/// نقطه‌پایان‌های احراز هویت: ثبت‌نام، ورود به سیستم، چرخش توکن refresh، لغو توکن
+/// و پروفایل کاربر جاری.
 /// </summary>
 /// <remarks>
-/// The controller requires authentication by default; registration, login and refresh are
-/// explicitly anonymous because a client needs them to obtain (or renew) a token in the
-/// first place. Revocation and the profile endpoint require a valid access token.
+/// کنترلر به‌صورت پیش‌فرض نیازمند احراز هویت است؛ ثبت‌نام، ورود و refresh صراحتاً
+/// anonymous هستند چون کلاینت برای به‌دست آوردن (یا تمدید) توکن در وهله‌ی اول به آن‌ها
+/// نیاز دارد. لغو توکن و نقطه‌پایان پروفایل به یک توکن دسترسی معتبر نیاز دارند.
 /// </remarks>
 [ApiController]
 [Route("api/[controller]")]
@@ -24,25 +24,25 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AuthController"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="AuthController"/> می‌سازد.
     /// </summary>
-    /// <param name="authService">The authentication service.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="authService"/> is <c>null</c>.</exception>
+    /// <param name="authService">سرویس احراز هویت.</param>
+    /// <exception cref="ArgumentNullException">وقتی <paramref name="authService"/> برابر <c>null</c> باشد پرتاب می‌شود.</exception>
     public AuthController(IAuthService authService)
     {
         _authService = authService ?? throw new ArgumentNullException(nameof(authService));
     }
 
     /// <summary>
-    /// Registers a new user account with the default <c>User</c> role and returns
-    /// the freshly issued access/refresh token pair.
+    /// یک حساب کاربری جدید با نقش پیش‌فرض <c>User</c> ثبت می‌کند و زوج تازه‌صادرشده‌ی
+    /// توکن دسترسی/refresh را برمی‌گرداند.
     /// </summary>
-    /// <param name="request">The registration payload.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The created user together with the issued tokens.</returns>
-    /// <response code="201">The account was created.</response>
-    /// <response code="400">The payload failed validation.</response>
-    /// <response code="409">The email address is already registered.</response>
+    /// <param name="request">payload ثبت‌نام.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>کاربر ایجادشده به‌همراه توکن‌های صادرشده.</returns>
+    /// <response code="201">حساب ایجاد شد.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
+    /// <response code="409">آدرس ایمیل قبلاً ثبت شده است.</response>
     [HttpPost("register")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status201Created)]
@@ -57,14 +57,14 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Signs in with email and password and returns a fresh token pair.
+    /// با ایمیل و رمز عبور وارد می‌شود و یک زوج توکن تازه برمی‌گرداند.
     /// </summary>
-    /// <param name="request">The login payload.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The issued tokens and the user profile.</returns>
-    /// <response code="200">The credentials were accepted.</response>
-    /// <response code="400">The payload failed validation.</response>
-    /// <response code="403">The credentials are wrong or the account is disabled.</response>
+    /// <param name="request">payload ورود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>توکن‌های صادرشده و پروفایل کاربر.</returns>
+    /// <response code="200">اعتبارنامه‌ها پذیرفته شدند.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
+    /// <response code="403">رمز عبور اشتباه است یا حساب غیرفعال شده است.</response>
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
@@ -79,13 +79,13 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Exchanges a valid, unrevoked refresh token for a new token pair (rotation).
+    /// یک توکن refresh معتبر و لغونشده را با یک زوج توکن جدید عوض می‌کند (چرخش).
     /// </summary>
-    /// <param name="request">The refresh token to exchange.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The new tokens and the user profile.</returns>
-    /// <response code="200">The token was rotated.</response>
-    /// <response code="400">The payload failed validation or the refresh token is no longer usable.</response>
+    /// <param name="request">توکن refresh که باید عوض شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>توکن‌های جدید و پروفایل کاربر.</returns>
+    /// <response code="200">توکن چرخانده شد.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد یا توکن دیگر قابل استفاده نیست.</response>
     [HttpPost("refresh")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
@@ -99,16 +99,16 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Revokes the given refresh token so it can no longer be exchanged for new tokens.
-    /// Requires an authenticated caller (sign-out / token clean-up).
+    /// توکن refresh داده‌شده را لغو می‌کند تا دیگر نتوان آن را با توکن‌های جدید عوض کرد.
+    /// نیازمند فراخواننده‌ی احرازهویت‌شده است (خروج از سیستم / پاک‌سازی توکن).
     /// </summary>
-    /// <param name="request">The refresh token to revoke.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>No content on success.</returns>
-    /// <response code="204">The token was revoked.</response>
-    /// <response code="400">The payload failed validation.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="404">No stored refresh token matches the supplied value.</response>
+    /// <param name="request">توکن refresh که باید لغو شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>در موفقیت بدون محتوا.</returns>
+    /// <response code="204">توکن لغو شد.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="404">هیچ توکن refresh ذخیره‌شده‌ای منطبق با مقدار ارائه‌شده نیست.</response>
     [HttpPost("revoke")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -122,13 +122,13 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Gets the profile of the user represented by the presented access token.
+    /// پروفایل کاربری را که توکن دسترسی ارائه‌شده نماینده‌ی آن است دریافت می‌کند.
     /// </summary>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The current user's profile.</returns>
-    /// <response code="200">The profile was returned.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="404">The account behind the token no longer exists.</response>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>پروفایل کاربر جاری.</returns>
+    /// <response code="200">پروفایل برگردانده شد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="404">حساب پشت توکن دیگر وجود ندارد.</response>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -136,15 +136,15 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<UserDto>> GetCurrentUser(CancellationToken cancellationToken)
     {
-        // The JWT "sub" claim arrives mapped as ClaimTypes.NameIdentifier (inbound claim
-        // mapping configured with the bearer middleware).
+        // claim مربوط به "sub" در JWT به‌صورت ClaimTypes.NameIdentifier نگاشت می‌شود
+        // (نگاشت claim های ورودی که با middleware مربوط به bearer پیکربندی شده است).
         string? subject = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!Guid.TryParse(subject, out Guid userId))
         {
             return Problem(
                 statusCode: StatusCodes.Status401Unauthorized,
-                title: "Invalid access token",
-                detail: "The access token does not contain a usable user identifier.");
+                title: "توکن دسترسی نامعتبر",
+                detail: "توکن دسترسی شامل شناسه‌ی کاربر قابل استفاده نیست.");
         }
 
         UserDto user = await _authService.GetCurrentUserAsync(userId, cancellationToken);

@@ -9,13 +9,13 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Api.Controllers;
 
 /// <summary>
-/// Order lifecycle endpoints: create, paged search, retrieval, status transitions,
-/// deletion and bulk creation.
+/// نقطه‌پایان‌های چرخه‌ی حیات سفارش: ایجاد، جست‌وجوی صفحه‌بندی‌شده، بازیابی، گذارهای
+/// وضعیت، حذف و ایجاد گروهی.
 /// </summary>
 /// <remarks>
-/// Every action requires an authenticated caller. Deletion and bulk creation are further
-/// restricted to administrators; status transitions forward the caller's role to the
-/// application service, which enforces the admin-only <c>Cancelled</c> transition.
+/// همه‌ی اکشن‌ها نیازمند فراخواننده‌ی احرازهویت‌شده‌اند. حذف و ایجاد گروهی علاوه بر این
+/// فقط برای مدیران مجازند؛ گذارهای وضعیت نقش فراخواننده را به سرویس برنامه منتقل می‌کنند
+/// که گذار <c>Cancelled</c> مخصوص مدیر را اعمال می‌کند.
 /// </remarks>
 [ApiController]
 [Route("api/[controller]")]
@@ -26,26 +26,26 @@ public class OrdersController : ControllerBase
     private readonly IOrderService _orderService;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="OrdersController"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="OrdersController"/> می‌سازد.
     /// </summary>
-    /// <param name="orderService">The order service.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="orderService"/> is <c>null</c>.</exception>
+    /// <param name="orderService">سرویس سفارش‌ها.</param>
+    /// <exception cref="ArgumentNullException">وقتی <paramref name="orderService"/> برابر <c>null</c> باشد پرتاب می‌شود.</exception>
     public OrdersController(IOrderService orderService)
     {
         _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
     }
 
     /// <summary>
-    /// Creates a new order in the <c>Pending</c> status. Open to any authenticated user.
+    /// یک سفارش جدید با وضعیت <c>Pending</c> ایجاد می‌کند. برای هر کاربر احرازهویت‌شده باز است.
     /// </summary>
-    /// <param name="request">The order creation payload.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The created order.</returns>
-    /// <response code="201">The order was created.</response>
-    /// <response code="400">The payload failed validation or a business rule was violated.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="404">The customer or one of the products does not exist.</response>
-    /// <response code="409">There is not enough stock for one of the products.</response>
+    /// <param name="request">payload ایجاد سفارش.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>سفارش ایجادشده.</returns>
+    /// <response code="201">سفارش ایجاد شد.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد یا قاعده‌ی کسب‌وکار نقض شد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="404">مشتری یکی از محصولات وجود ندارد.</response>
+    /// <response code="409">موجودی یکی از محصولات کافی نیست.</response>
     [HttpPost]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -61,17 +61,17 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a filtered, sorted and paginated page of orders.
+    /// یک صفحه‌ی فیلترشده، مرتب‌شده و صفحه‌بندی‌شده از سفارش‌ها دریافت می‌کند.
     /// </summary>
     /// <param name="filter">
-    /// Query parameters: <c>customerId</c>, <c>status</c>, <c>fromDate</c>, <c>toDate</c>,
-    /// <c>searchTerm</c>, <c>sortBy</c>, <c>sortDescending</c>, <c>pageNumber</c>, <c>pageSize</c>.
+    /// پارامترهای پرس‌وجو: <c>customerId</c>، <c>status</c>، <c>fromDate</c>، <c>toDate</c>،
+    /// <c>searchTerm</c>، <c>sortBy</c>، <c>sortDescending</c>، <c>pageNumber</c>، <c>pageSize</c>.
     /// </param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The requested page of orders.</returns>
-    /// <response code="200">The page was returned.</response>
-    /// <response code="400">A query parameter was invalid.</response>
-    /// <response code="401">No valid access token was presented.</response>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>صفحه‌ی درخواستی سفارش‌ها.</returns>
+    /// <response code="200">صفحه برگردانده شد.</response>
+    /// <response code="400">یک پارامتر پرس‌وجو نامعتبر بود.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<OrderDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -85,14 +85,14 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a single order by identifier, including customer and line items.
+    /// یک سفارش را بر اساس شناسه، شامل مشتری و ردیف‌ها، دریافت می‌کند.
     /// </summary>
-    /// <param name="id">The order identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The requested order.</returns>
-    /// <response code="200">The order was returned.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="404">No order with the given identifier exists.</response>
+    /// <param name="id">شناسه‌ی سفارش.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>سفارش درخواستی.</returns>
+    /// <response code="200">سفارش برگردانده شد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="404">سفارشی با این شناسه وجود ندارد.</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -104,20 +104,20 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
-    /// Transitions an order to a new status (forward-only rules are enforced by the service).
-    /// Any authenticated user may progress an order; cancelling it additionally requires the
-    /// <c>Admin</c> role, which is why the caller's role claim is forwarded to the service.
+    /// یک سفارش را به وضعیت جدید منتقل می‌کند (قواعد forward-only توسط سرویس اعمال می‌شوند).
+    /// هر کاربر احرازهویت‌شده می‌تواند سفارش را جلو ببرد؛ لغو آن علاوه بر این به نقش
+    /// <c>Admin</c> نیاز دارد، به همین دلیل claim نقش فراخواننده به سرویس منتقل می‌شود.
     /// </summary>
-    /// <param name="id">The order identifier.</param>
-    /// <param name="request">The requested new status.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The updated order.</returns>
-    /// <response code="200">The status was updated.</response>
-    /// <response code="400">The payload failed validation or the transition is not allowed.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">A non-administrator tried to cancel the order.</response>
-    /// <response code="404">No order with the given identifier exists.</response>
-    /// <response code="409">Confirming the order would exceed the available stock.</response>
+    /// <param name="id">شناسه‌ی سفارش.</param>
+    /// <param name="request">وضعیت جدید درخواستی.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>سفارش به‌روزرسانی‌شده.</returns>
+    /// <response code="200">وضعیت به‌روزرسانی شد.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد یا گذار مجاز نیست.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">یک غیرمدیر سعی کرد سفارش را لغو کند.</response>
+    /// <response code="404">سفارشی با این شناسه وجود ندارد.</response>
+    /// <response code="409">تأیید سفارش از موجودی در دسترس فراتر می‌رود.</response>
     [HttpPatch("{id:guid}/status")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -130,9 +130,9 @@ public class OrdersController : ControllerBase
         [FromBody] UpdateOrderStatusRequest request,
         CancellationToken cancellationToken)
     {
-        // Role claim: the JWT "role" claim is surfaced as ClaimTypes.Role by the bearer
-        // middleware (RoleClaimType). The service compares it against Roles.Admin to allow
-        // the admin-only Cancelled transition.
+        // claim مربوط به نقش: claim "role" در JWT توسط middleware مرتبط با bearer به
+        // ClaimTypes.Role نمایان می‌شود (RoleClaimType). سرویس آن را با Roles.Admin مقایسه
+        // می‌کند تا گذار Cancelled مخصوص مدیر را مجاز کند.
         string requesterRole = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 
         OrderDto updated = await _orderService.UpdateStatusAsync(
@@ -145,15 +145,15 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
-    /// Deletes an order. Administrators only.
+    /// یک سفارش را حذف می‌کند. فقط مدیران.
     /// </summary>
-    /// <param name="id">The order identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>No content on success.</returns>
-    /// <response code="204">The order was deleted.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">The caller is not an administrator.</response>
-    /// <response code="404">No order with the given identifier exists.</response>
+    /// <param name="id">شناسه‌ی سفارش.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>در موفقیت بدون محتوا.</returns>
+    /// <response code="204">سفارش حذف شد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
+    /// <response code="404">سفارشی با این شناسه وجود ندارد.</response>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -167,16 +167,16 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
-    /// Creates many orders in one call, reporting a per-order success or failure.
-    /// Administrators only.
+    /// چندین سفارش را در یک فراخوانی ایجاد می‌کند و موفقیت یا شکست هر سفارش را گزارش می‌دهد.
+    /// فقط مدیران.
     /// </summary>
-    /// <param name="request">The bulk creation payload (1-500 orders).</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
-    /// <returns>The per-order results.</returns>
-    /// <response code="200">The bulk operation ran; inspect the per-order results.</response>
-    /// <response code="400">The payload failed validation.</response>
-    /// <response code="401">No valid access token was presented.</response>
-    /// <response code="403">The caller is not an administrator.</response>
+    /// <param name="request">payload ایجاد گروهی (۱ تا ۵۰۰ سفارش).</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>نتایج به تفکیک سفارش.</returns>
+    /// <response code="200">عملیات گروهی اجرا شد؛ نتایج هر سفارش را بررسی کنید.</response>
+    /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
+    /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
     [HttpPost("bulk")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(BulkCreateOrdersResponse), StatusCodes.Status200OK)]

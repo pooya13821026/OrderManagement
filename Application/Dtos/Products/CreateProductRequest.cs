@@ -3,45 +3,45 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Products;
 
 /// <summary>
-/// Payload for creating a new product.
+/// بدنه‌ی درخواست برای ایجاد یک محصول جدید.
 /// </summary>
 public class CreateProductRequest
 {
     /// <summary>
-    /// Gets or sets the display name of the product.
+    /// نام نمایشی محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the optional description of the product.
+    /// توضیحات اختیاری محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [MaxLength(2000)]
     public string? Description { get; set; }
 
     /// <summary>
-    /// Gets or sets the unit price of the product.
+    /// قیمت واحد محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [Range(0.01, double.MaxValue)]
     public decimal Price { get; set; }
 
     /// <summary>
-    /// Gets or sets the initial stock quantity of the product.
+    /// موجودی اولیه‌ی محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Range(0, int.MaxValue)]
     public int StockQuantity { get; set; }
 
     /// <summary>
-    /// Gets or sets the unique SKU code of the product.
+    /// کد SKU یکتای محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(50)]
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the product is active. Defaults to <c>true</c>.
+    /// مقداری که نشان می‌دهد محصول فعال است را می‌گیرد یا تنظیم می‌کند. مقدار پیش‌فرض <c>true</c> است.
     /// </summary>
     public bool IsActive { get; set; } = true;
 }

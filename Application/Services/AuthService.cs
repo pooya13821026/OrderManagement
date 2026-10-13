@@ -9,14 +9,14 @@ using OrderManagement.Domain.Exceptions;
 namespace OrderManagement.Application.Services;
 
 /// <summary>
-/// Implements authentication: registration, sign-in, refresh token rotation and revocation.
-/// Passwords are hashed through <see cref="IPasswordHasher"/> and JWTs are issued through
-/// <see cref="ITokenService"/>; only refresh token hashes are persisted.
+/// پیاده‌سازی احراز هویت: ثبت‌نام، ورود، چرخه‌ی توکن refresh و ابطال آن.
+/// گذرواژه‌ها از طریق <see cref="IPasswordHasher"/> هش و JWTها از طریق
+/// <see cref="ITokenService"/> صادر می‌شوند؛ فقط هش توکن‌های refresh ذخیره می‌شوند.
 /// </summary>
 public class AuthService : IAuthService
 {
     /// <summary>
-    /// Lifetime of newly issued refresh tokens.
+    /// طول عمر توکن‌های refresh تازه صادرشده.
     /// </summary>
     private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(7);
 
@@ -25,11 +25,11 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher _passwordHasher;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AuthService"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="AuthService"/> می‌سازد.
     /// </summary>
-    /// <param name="unitOfWork">The unit of work used for all persistence.</param>
-    /// <param name="tokenService">The service issuing access and refresh tokens.</param>
-    /// <param name="passwordHasher">The service hashing and verifying passwords.</param>
+    /// <param name="unitOfWork">واحد کاری که برای همه‌ی ذخیره‌سازی‌ها استفاده می‌شود.</param>
+    /// <param name="tokenService">سرویس صادرکننده‌ی توکن‌های دسترسی و refresh.</param>
+    /// <param name="passwordHasher">سرویس هش و تأیید گذرواژه‌ها.</param>
     public AuthService(IUnitOfWork unitOfWork, ITokenService tokenService, IPasswordHasher passwordHasher)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
@@ -46,18 +46,18 @@ public class AuthService : IAuthService
 
         string normalizedEmail = request.Email.Trim();
 
-        // Best-effort duplicate guard; the unique index in the database remains the
-        // authoritative protection against concurrent registrations.
+        // نگهبان تکراری به‌صورت best-effort؛ ایندکس یکتای دیتابیس همچنان حافظ
+        // مقتدرانه در برابر ثبت‌نام‌های همزمان است.
         if (await _unitOfWork.Users.ExistsByEmailAsync(normalizedEmail, cancellationToken))
         {
-            throw new DuplicateEntityException(nameof(ApplicationUser), $"A user with email '{normalizedEmail}' already exists.");
+            throw new DuplicateEntityException(nameof(ApplicationUser), $"کاربری با ایمیل '{normalizedEmail}' از قبل وجود دارد.");
         }
 
         var user = new ApplicationUser
         {
             Id = Guid.NewGuid(),
-            // The email prefix keeps the user name unique enough for this service;
-            // uniqueness itself is still enforced by the database.
+            // پیشوند ایمیل نام کاربری را برای این سرویس به‌قدر کافی یکتا نگه می‌دارد؛
+            // خودِ یکتایی همچنان توسط دیتابیس تضمین می‌شود.
             UserName = BuildUserName(normalizedEmail),
             Email = normalizedEmail,
             PasswordHash = _passwordHasher.Hash(request.Password),
@@ -65,7 +65,7 @@ public class AuthService : IAuthService
             LastName = request.LastName.Trim(),
             PhoneNumber = request.PhoneNumber?.Trim(),
             IsActive = true,
-            // Registration always creates a regular user; administrators are seeded/promoted elsewhere.
+            // ثبت‌نام همیشه کاربر عادی می‌سازد؛ مدیران در جای دیگری seed یا ارتقا داده می‌شوند.
             Role = Roles.User,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid().ToString("N")
@@ -87,16 +87,16 @@ public class AuthService : IAuthService
         string normalizedEmail = request.Email.Trim();
         ApplicationUser? user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail, cancellationToken);
 
-        // One generic error for unknown email and wrong password avoids revealing
-        // which accounts exist (user enumeration).
+        // یک خطای عمومی برای ایمیل ناشناخته و گذرواژه‌ی اشتباه، از فاش شدن
+        // اینکه کدام حساب‌ها وجود دارند جلوگیری می‌کند (user enumeration).
         if (user is null || !_passwordHasher.Verify(request.Password, user.PasswordHash))
         {
-            throw new UnauthorizedOperationException("Invalid email or password.");
+            throw new UnauthorizedOperationException("ایمیل یا گذرواژه نامعتبر است.");
         }
 
         if (!user.IsActive)
         {
-            throw new UnauthorizedOperationException("This account has been disabled.");
+            throw new UnauthorizedOperationException("این حساب غیرفعال شده است.");
         }
 
         user.LastLoginAt = DateTime.UtcNow;
@@ -114,27 +114,27 @@ public class AuthService : IAuthService
 
         string tokenHash = _tokenService.HashRefreshToken(request.RefreshToken.Trim());
         RefreshToken storedToken = await _unitOfWork.RefreshTokens.GetByTokenHashAsync(tokenHash, cancellationToken)
-            ?? throw new UnauthorizedOperationException("The refresh token is not valid.");
+            ?? throw new UnauthorizedOperationException("توکن refresh معتبر نیست.");
 
         if (storedToken.RevokedAt is not null)
         {
-            throw new UnauthorizedOperationException("The refresh token has been revoked.");
+            throw new UnauthorizedOperationException("توکن refresh باطل شده است.");
         }
 
         if (storedToken.ExpiresAt <= DateTime.UtcNow)
         {
-            throw new UnauthorizedOperationException("The refresh token has expired.");
+            throw new UnauthorizedOperationException("توکن refresh منقضی شده است.");
         }
 
         ApplicationUser user = storedToken.User
-            ?? throw new UnauthorizedOperationException("The refresh token is not valid.");
+            ?? throw new UnauthorizedOperationException("توکن refresh معتبر نیست.");
 
         if (!user.IsActive)
         {
-            throw new UnauthorizedOperationException("This account has been disabled.");
+            throw new UnauthorizedOperationException("این حساب غیرفعال شده است.");
         }
 
-        // Rotation: revoke the presented token and issue a replacement in the same save.
+        // چرخه (rotation): باطل کردن توکن ارائه‌شده و صدور توکن جایگزین در همان ذخیره‌سازی.
         string newRawToken = _tokenService.GenerateRefreshToken();
         string newTokenHash = _tokenService.HashRefreshToken(newRawToken);
         DateTime now = DateTime.UtcNow;
@@ -171,7 +171,7 @@ public class AuthService : IAuthService
 
         string tokenHash = _tokenService.HashRefreshToken(refreshToken.Trim());
         RefreshToken storedToken = await _unitOfWork.RefreshTokens.GetByTokenHashAsync(tokenHash, cancellationToken)
-            ?? throw new EntityNotFoundException(nameof(RefreshToken), "the provided token");
+            ?? throw new EntityNotFoundException(nameof(RefreshToken), "توکن ارائه‌شده");
 
         if (storedToken.RevokedAt is null)
         {
@@ -193,8 +193,8 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Issues a new access token and refresh token pair for the user and persists the
-    /// refresh token hash so it can be validated during refresh.
+    /// جفت توکن دسترسی و refresh جدیدی برای کاربر صادر می‌کند و هش توکن refresh را ذخیره
+    /// می‌کند تا هنگام refresh قابل اعتبارسنجی باشد.
     /// </summary>
     private async Task<AuthResponse> IssueTokensAsync(ApplicationUser user, CancellationToken cancellationToken)
     {
@@ -223,8 +223,8 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Builds a user name from the email local part; non-letter characters are stripped
-    /// and a short random suffix keeps collisions unlikely.
+    /// نام کاربری را از بخش محلی ایمیل می‌سازد؛ کاراکترهای غیرحرفی حذف می‌شوند
+    /// و یک پسوند تصادفی کوتاه برخورد نام‌ها را بعید می‌کند.
     /// </summary>
     private static string BuildUserName(string email)
     {

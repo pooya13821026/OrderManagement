@@ -3,28 +3,28 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Domain.Repositories;
 
 /// <summary>
-/// Repository contract for <see cref="ApplicationUser"/> entities.
+/// قرارداد مخزن برای موجودیت‌های <see cref="ApplicationUser"/>.
 /// </summary>
 public interface IUserRepository : IRepository<ApplicationUser, Guid>
 {
     /// <summary>
-    /// Gets a user by their unique email address, or <c>null</c> when no such user exists.
+    /// کاربر را بر اساس ایمیل یکتایش برمی‌گرداند، یا اگر چنین کاربری وجود نداشته باشد <c>null</c>.
     /// </summary>
-    /// <param name="email">The email address to look up.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="email">آدرس ایمیلی که باید جست‌وجو شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<ApplicationUser?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a user by their unique user name, or <c>null</c> when no such user exists.
+    /// کاربر را بر اساس نام کاربری یکتایش برمی‌گرداند، یا اگر چنین کاربری وجود نداشته باشد <c>null</c>.
     /// </summary>
-    /// <param name="userName">The user name to look up.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="userName">نام کاربری‌ای که باید جست‌وجو شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<ApplicationUser?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Determines whether a user with the given email address already exists.
+    /// تعیین می‌کند که آیا کاربری با این ایمیل از قبل وجود دارد یا نه.
     /// </summary>
-    /// <param name="email">The email address to check.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="email">آدرس ایمیلی که باید بررسی شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
 }

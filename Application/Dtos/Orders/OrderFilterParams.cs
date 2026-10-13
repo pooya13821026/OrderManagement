@@ -4,45 +4,45 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Filter and pagination inputs for paging through orders.
+/// ورودی‌های فیلتر و صفحه‌بندی برای مرور صفحه‌بندی‌شده‌ی سفارش‌ها.
 /// </summary>
 public class OrderFilterParams : PaginationParams
 {
     /// <summary>
-    /// Gets or sets an optional customer identifier filter.
+    /// فیلتر اختیاری شناسه‌ی مشتری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public Guid? CustomerId { get; set; }
 
     /// <summary>
-    /// Gets or sets an optional order status filter.
+    /// فیلتر اختیاری وضعیت سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public OrderStatus? Status { get; set; }
 
     /// <summary>
-    /// Gets or sets an optional inclusive lower bound on the order date (UTC).
+    /// کران پایین اختیاری و شامل بر تاریخ سفارش (UTC) را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime? FromDate { get; set; }
 
     /// <summary>
-    /// Gets or sets an optional inclusive upper bound on the order date (UTC).
+    /// کران بالای اختیاری و شامل بر تاریخ سفارش (UTC) را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public DateTime? ToDate { get; set; }
 
     /// <summary>
-    /// Gets or sets an optional free-text search term matched against order number
-    /// and shipping address.
+    /// عبارت جست‌وجوی متنی آزاد اختیاری که روی شماره سفارش
+    /// و آدرس ارسال تطبیق داده می‌شود را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public string? SearchTerm { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional sort column: <c>OrderNumber</c>, <c>OrderDate</c>
-    /// or <c>TotalAmount</c>. <c>null</c> falls back to order date.
+    /// ستون مرتب‌سازی اختیاری: <c>OrderNumber</c>، <c>OrderDate</c>
+    /// یا <c>TotalAmount</c>. مقدار <c>null</c> به تاریخ سفارش برمی‌گردد.
     /// </summary>
     public string? SortBy { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether sorting should be descending
-    /// instead of ascending.
+    /// مقداری که نشان می‌دهد مرتب‌سازی باید نزولی باشد
+    /// به جای صعودی را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public bool SortDescending { get; set; }
 }

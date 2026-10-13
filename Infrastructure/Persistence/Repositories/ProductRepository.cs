@@ -5,16 +5,16 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// EF Core implementation of <see cref="IProductRepository"/>. Display queries are not
-/// tracked; <see cref="GetByIdsAsync"/> intentionally returns tracked entities because its
-/// results feed order creation, which attaches a graph referencing those products.
+/// پیاده‌سازی EF Core برای <see cref="IProductRepository"/>. پرس‌وجوهای نمایشی ردیابی
+/// نمی‌شوند؛ <see cref="GetByIdsAsync"/> عمداً موجودیت‌های tracked برمی‌گرداند چون نتایج
+/// آن ایجاد سفارش را تغذیه می‌کند که گرافی با ارجاع به همان محصولات متصل می‌کند.
 /// </summary>
 public class ProductRepository : EfRepository<Product, Guid>, IProductRepository
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ProductRepository"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="ProductRepository"/> می‌سازد.
     /// </summary>
-    /// <param name="context">The shared database context of the current scope.</param>
+    /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
     public ProductRepository(OrderManagementDbContext context)
         : base(context)
     {
@@ -92,9 +92,9 @@ public class ProductRepository : EfRepository<Product, Guid>, IProductRepository
             return Array.Empty<Product>();
         }
 
-        // Stock checks and order creation mutate/save these products later, so they must
-        // be tracked: attaching a new order graph would otherwise treat the reachable
-        // (detached) products as brand-new entities and try to insert them again.
+        // بررسی موجودی و ایجاد سفارش بعداً این محصولات را تغییر و ذخیره می‌کنند، پس باید
+        // tracked باشند: در غیر این صورت متصل کردن گراف سفارش جدید، محصولات قابل‌دسترس
+        // (detached) را موجودیت‌های کاملاً جدید فرض می‌کند و سعی می‌کند دوباره درجشان کند.
         return await Context.Products
             .Where(product => productIds.Contains(product.Id))
             .ToListAsync(cancellationToken);

@@ -5,23 +5,23 @@ using Microsoft.Extensions.Configuration;
 namespace OrderManagement.Infrastructure.Persistence;
 
 /// <summary>
-/// Design-time factory used ONLY by the EF Core CLI tools
-/// (<c>dotnet ef migrations ...</c>) so the tools can create the
-/// <see cref="OrderManagementDbContext"/> without running <c>Api/Program.cs</c>
-/// (which would start the web host, Serilog and the seeder).
+/// کارخانه‌ی design-time که فقط توسط ابزارهای CLI مربوط به EF Core
+/// (<c>dotnet ef migrations ...</c>) استفاده می‌شود تا ابزارها بتوانند
+/// <see cref="OrderManagementDbContext"/> را بدون اجرای <c>Api/Program.cs</c>
+/// (که وب‌هاست، Serilog و seeder را بالا می‌آورد) بسازند.
 /// </summary>
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<OrderManagementDbContext>
 {
     /// <summary>
-    /// Creates the context for design-time operations using the API project's
-    /// configuration when available, falling back to LocalDB otherwise.
+    /// کانتکست مربوط به عملیات design-time را با پیکربندی پروژه‌ی API در صورت وجود
+    /// می‌سازد و در غیر این صورت به LocalDB برمی‌گردد.
     /// </summary>
-    /// <param name="args">Command-line arguments passed by the EF tools.</param>
-    /// <returns>A configured context instance.</returns>
+    /// <param name="args">آرگومان‌های خط فرمان که توسط ابزارهای EF ارسال شده‌اند.</param>
+    /// <returns>یک نمونه‌ی پیکربندی‌شده از کانتکست.</returns>
     public OrderManagementDbContext CreateDbContext(string[] args)
     {
-        // The factory assembly is Infrastructure/bin; walk up to the solution root,
-        // then into Api/ so migrations pick up the same connection string as runtime.
+        // مونتاژ کارخانه در Infrastructure/bin است؛ یک سطح بالا می‌رویم تا به ریشه‌ی solution
+        // و سپس به Api/ برسیم تا migration ها همان رشته‌ی اتصال زمان اجرا را بردارند.
         string basePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "Api");
 
         IConfiguration configuration = new ConfigurationBuilder()

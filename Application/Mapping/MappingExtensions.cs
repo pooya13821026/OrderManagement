@@ -7,16 +7,16 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Application.Mapping;
 
 /// <summary>
-/// Static mapping helpers converting domain entities to their public DTO projections.
-/// Keeping the mapping in one place avoids duplicated field-by-field copies in services.
+/// متدهای کمکی نگاشت استاتیک که موجودیت‌های دامنه را به نمای عمومی DTO آن‌ها تبدیل می‌کنند.
+/// نگاشت در یک جا نگه‌داشته می‌شود تا از کپی‌های تکراری فیلدبه‌فیلد در سرویس‌ها جلوگیری شود.
 /// </summary>
 public static class MappingExtensions
 {
     /// <summary>
-    /// Maps a <see cref="Customer"/> entity to a <see cref="CustomerDto"/>.
+    /// موجودیت <see cref="Customer"/> را به <see cref="CustomerDto"/> نگاشت می‌کند.
     /// </summary>
-    /// <param name="customer">The customer entity to map.</param>
-    /// <returns>The customer DTO.</returns>
+    /// <param name="customer">موجودیت مشتری‌ای که باید نگاشت شود.</param>
+    /// <returns>DTO مشتری.</returns>
     public static CustomerDto ToDto(this Customer customer)
     {
         ArgumentNullException.ThrowIfNull(customer);
@@ -35,10 +35,10 @@ public static class MappingExtensions
     }
 
     /// <summary>
-    /// Maps a <see cref="Product"/> entity to a <see cref="ProductDto"/>.
+    /// موجودیت <see cref="Product"/> را به <see cref="ProductDto"/> نگاشت می‌کند.
     /// </summary>
-    /// <param name="product">The product entity to map.</param>
-    /// <returns>The product DTO.</returns>
+    /// <param name="product">موجودیت محصولی که باید نگاشت شود.</param>
+    /// <returns>DTO محصول.</returns>
     public static ProductDto ToDto(this Product product)
     {
         ArgumentNullException.ThrowIfNull(product);
@@ -58,11 +58,11 @@ public static class MappingExtensions
     }
 
     /// <summary>
-    /// Maps an <see cref="OrderItem"/> entity to an <see cref="OrderItemDto"/> using the
-    /// related product's name and SKU. The order must have its items' products loaded.
+    /// موجودیت <see cref="OrderItem"/> را با نام و SKU محصول مرتبط به <see cref="OrderItemDto"/> نگاشت می‌کند.
+    /// محصولات ردیف‌های سفارش باید قبلاً بارگذاری شده باشند.
     /// </summary>
-    /// <param name="orderItem">The order item entity to map.</param>
-    /// <returns>The order item DTO.</returns>
+    /// <param name="orderItem">موجودیت ردیف سفارش که باید نگاشت شود.</param>
+    /// <returns>DTO ردیف سفارش.</returns>
     public static OrderItemDto ToDto(this OrderItem orderItem)
     {
         ArgumentNullException.ThrowIfNull(orderItem);
@@ -80,12 +80,12 @@ public static class MappingExtensions
     }
 
     /// <summary>
-    /// Maps an <see cref="Order"/> entity to an <see cref="OrderDto"/>, including the
-    /// customer summary and all line items. The order must have Customer and Items
-    /// (with each item's Product) loaded.
+    /// موجودیت <see cref="Order"/> را به <see cref="OrderDto"/> نگاشت می‌کند، شامل خلاصه‌ی مشتری
+    /// و همه‌ی ردیف‌های سفارش. Customer و Items سفارش (با Product هر ردیف)
+    /// باید قبلاً بارگذاری شده باشند.
     /// </summary>
-    /// <param name="order">The order entity to map.</param>
-    /// <returns>The order DTO.</returns>
+    /// <param name="order">موجودیت سفارشی که باید نگاشت شود.</param>
+    /// <returns>DTO سفارش.</returns>
     public static OrderDto ToDto(this Order order)
     {
         ArgumentNullException.ThrowIfNull(order);
@@ -111,11 +111,11 @@ public static class MappingExtensions
     }
 
     /// <summary>
-    /// Maps an <see cref="ApplicationUser"/> entity to a <see cref="UserDto"/>.
-    /// The password hash and security stamp are deliberately never exposed.
+    /// موجودیت <see cref="ApplicationUser"/> را به <see cref="UserDto"/> نگاشت می‌کند.
+    /// هش گذرواژه و مهر امنیتی عمداً هرگز افشا نمی‌شوند.
     /// </summary>
-    /// <param name="user">The user entity to map.</param>
-    /// <returns>The user DTO.</returns>
+    /// <param name="user">موجودیت کاربری که باید نگاشت شود.</param>
+    /// <returns>DTO کاربر.</returns>
     public static UserDto ToDto(this ApplicationUser user)
     {
         ArgumentNullException.ThrowIfNull(user);

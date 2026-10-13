@@ -10,20 +10,20 @@ using OrderManagement.Infrastructure.Security;
 namespace OrderManagement.Infrastructure.Extensions;
 
 /// <summary>
-/// DI registration entry points for the Infrastructure layer.
+/// نقاط ثبت DI برای لایه‌ی Infrastructure.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers SQL Server persistence plus every repository, the unit of work and the
-    /// security services (password hasher, JWT token service). Everything is scoped, so
-    /// all repositories of a request share one <see cref="OrderManagementDbContext"/>.
+    /// پایداری SQL Server به‌علاوه‌ی همه‌ی repository ها، unit of work و سرویس‌های
+    /// امنیتی (هش‌کننده‌ی رمز عبور، سرویس توکن JWT) را ثبت می‌کند. همه‌ی موارد scoped هستند،
+    /// بنابراین همه‌ی repository های یک درخواست یک <see cref="OrderManagementDbContext"/> مشترک دارند.
     /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="configuration">The application configuration; reads <c>ConnectionStrings:DefaultConnection</c>.</param>
-    /// <returns>The service collection, for chaining.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when an argument is <c>null</c>.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the default connection string is missing.</exception>
+    /// <param name="services">مجموعه‌ی سرویس‌ها.</param>
+    /// <param name="configuration">پیکربندی برنامه؛ <c>ConnectionStrings:DefaultConnection</c> را می‌خواند.</param>
+    /// <returns>مجموعه‌ی سرویس‌ها، برای زنجیره‌سازی.</returns>
+    /// <exception cref="ArgumentNullException">وقتی یک آرگومان برابر <c>null</c> باشد پرتاب می‌شود.</exception>
+    /// <exception cref="InvalidOperationException">وقتی رشته‌ی اتصال پیش‌فرض غایب باشد پرتاب می‌شود.</exception>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
 
         string connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
-                "Missing connection string 'ConnectionStrings:DefaultConnection'.");
+                "رشته‌ی اتصال 'ConnectionStrings:DefaultConnection' وجود ندارد.");
 
         services.AddDbContext<OrderManagementDbContext>(options =>
             options.UseSqlServer(connectionString));

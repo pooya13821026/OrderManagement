@@ -4,39 +4,40 @@ using OrderManagement.Domain.Enums;
 namespace OrderManagement.Domain.Repositories;
 
 /// <summary>
-/// Repository contract for <see cref="Order"/> entities.
+/// قرارداد مخزن برای موجودیت‌های <see cref="Order"/>.
 /// </summary>
 public interface IOrderRepository : IRepository<Order, Guid>
 {
     /// <summary>
-    /// Gets an order by identifier including the customer and all items with their products,
-    /// or <c>null</c> when no such order exists.
+    /// سفارش را به همراه مشتری و همه‌ی اقلام با محصولاتشان برمی‌گرداند،
+    /// یا اگر چنین سفارشی وجود نداشته باشد <c>null</c>.
     /// </summary>
-    /// <param name="id">The order identifier.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="id">شناسه‌ی سفارش.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<Order?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets an order by its unique order number, or <c>null</c> when no such order exists.
+    /// سفارش را بر اساس شماره‌ی یکتای آن برمی‌گرداند، یا اگر چنین سفارشی وجود نداشته باشد <c>null</c>.
     /// </summary>
-    /// <param name="orderNumber">The order number to look up.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="orderNumber">شماره‌ی سفارشی که باید جست‌وجو شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<Order?> GetByOrderNumberAsync(string orderNumber, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a page of orders with optional filters for customer, status, date range and a free-text
-    /// search term matched against order number and shipping address, with configurable sorting.
+    /// صفحه‌ای از سفارش‌ها را با فیلترهای اختیاری برای مشتری، وضعیت، بازه‌ی تاریخ و یک عبارت
+    /// جست‌وجوی متنی آزاد که روی شماره سفارش و آدرس ارسال تطبیق داده می‌شود، به همراه مرتب‌سازی
+    /// قابل پیکربندی برمی‌گرداند.
     /// </summary>
-    /// <param name="customerId">Optional customer identifier filter.</param>
-    /// <param name="status">Optional order status filter.</param>
-    /// <param name="fromDate">Optional inclusive lower bound on the order date.</param>
-    /// <param name="toDate">Optional inclusive upper bound on the order date.</param>
-    /// <param name="searchTerm">Optional free-text search term; <c>null</c> or empty skips the text filter.</param>
-    /// <param name="sortBy">Optional sort column name; <c>null</c> falls back to the default sort (order date).</param>
-    /// <param name="sortDescending">Whether to sort descending instead of ascending.</param>
-    /// <param name="pageNumber">The 1-based page number.</param>
-    /// <param name="pageSize">The number of items per page.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="customerId">فیلتر اختیاری شناسه‌ی مشتری.</param>
+    /// <param name="status">فیلتر اختیاری وضعیت سفارش.</param>
+    /// <param name="fromDate">کران پایین اختیاری و شامل بر تاریخ سفارش.</param>
+    /// <param name="toDate">کران بالای اختیاری و شامل بر تاریخ سفارش.</param>
+    /// <param name="searchTerm">عبارت جست‌وجوی متنی آزاد اختیاری؛ <c>null</c> یا خالی فیلتر متن را رد می‌کند.</param>
+    /// <param name="sortBy">نام ستون مرتب‌سازی اختیاری؛ <c>null</c> به مرتب‌سازی پیش‌فرض (تاریخ سفارش) برمی‌گردد.</param>
+    /// <param name="sortDescending">اینکه مرتب‌سازی نزولی باشد به جای صعودی.</param>
+    /// <param name="pageNumber">شماره‌ی صفحه که از ۱ شروع می‌شود.</param>
+    /// <param name="pageSize">تعداد اقلام در هر صفحه.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<PagedEntities<Order>> GetPagedAsync(
         Guid? customerId,
         OrderStatus? status,
@@ -50,9 +51,9 @@ public interface IOrderRepository : IRepository<Order, Guid>
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Determines whether an order with the given order number already exists.
+    /// تعیین می‌کند که آیا سفارشی با این شماره سفارش از قبل وجود دارد یا نه.
     /// </summary>
-    /// <param name="orderNumber">The order number to check.</param>
-    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <param name="orderNumber">شماره‌ی سفارشی که باید بررسی شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<bool> ExistsByOrderNumberAsync(string orderNumber, CancellationToken cancellationToken = default);
 }

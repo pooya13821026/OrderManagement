@@ -3,31 +3,31 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Orders;
 
 /// <summary>
-/// Payload for creating a new order.
+/// بدنه‌ی درخواست برای ایجاد یک سفارش جدید.
 /// </summary>
 public class CreateOrderRequest
 {
     /// <summary>
-    /// Gets or sets the identifier of the customer placing the order.
+    /// شناسه‌ی مشتری‌ای که سفارش را ثبت می‌کند را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     public Guid CustomerId { get; set; }
 
     /// <summary>
-    /// Gets or sets the line items of the order. At least one item is required.
+    /// ردیف‌های سفارش را می‌گیرد یا تنظیم می‌کند. حداقل یک ردیف الزامی است.
     /// </summary>
     [Required]
     [MinLength(1)]
     public List<CreateOrderItemRequest> Items { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the optional shipping address for this order.
+    /// آدرس ارسال اختیاری برای این سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [MaxLength(500)]
     public string? ShippingAddress { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional free-form notes for this order.
+    /// یادداشت‌های آزاد اختیاری برای این سفارش را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [MaxLength(1000)]
     public string? Notes { get; set; }

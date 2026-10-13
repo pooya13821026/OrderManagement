@@ -6,10 +6,10 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Infrastructure.Persistence;
 
 /// <summary>
-/// Aggregates the scoped repositories plus one shared <see cref="OrderManagementDbContext"/>
-/// and the database transaction boundary, so application services can coordinate several
-/// repositories atomically. Registered as scoped; the context instance is the same one used
-/// by every repository of the scope.
+/// repository های scoped را به‌همراه یک <see cref="OrderManagementDbContext"/> مشترک و
+/// مرز تراکنش دیتابیس گرد هم می‌آورد تا سرویس‌های برنامه بتوانند چند repository را
+/// به‌صورت اتمیک هماهنگ کنند. به‌صورت scoped ثبت می‌شود؛ نمونه‌ی کانتکست همانی است که
+/// همه‌ی repository های همین scope از آن استفاده می‌کنند.
 /// </summary>
 public class UnitOfWork : IUnitOfWork
 {
@@ -24,16 +24,16 @@ public class UnitOfWork : IUnitOfWork
     private IDbContextTransaction? _transaction;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UnitOfWork"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="UnitOfWork"/> می‌سازد.
     /// </summary>
-    /// <param name="context">The shared database context of the current scope.</param>
-    /// <param name="customers">The customer repository.</param>
-    /// <param name="products">The product repository.</param>
-    /// <param name="orders">The order repository.</param>
-    /// <param name="orderItems">The order item repository.</param>
-    /// <param name="users">The user repository.</param>
-    /// <param name="refreshTokens">The refresh token repository.</param>
-    /// <exception cref="ArgumentNullException">Thrown when any argument is <c>null</c>.</exception>
+    /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
+    /// <param name="customers">repository مشتریان.</param>
+    /// <param name="products">repository محصولات.</param>
+    /// <param name="orders">repository سفارش‌ها.</param>
+    /// <param name="orderItems">repository ردیف‌های سفارش.</param>
+    /// <param name="users">repository کاربران.</param>
+    /// <param name="refreshTokens">repository توکن‌های refresh.</param>
+    /// <exception cref="ArgumentNullException">وقتی هر آرگومانی برابر <c>null</c> باشد پرتاب می‌شود.</exception>
     public UnitOfWork(
         OrderManagementDbContext context,
         ICustomerRepository customers,
@@ -77,24 +77,24 @@ public class UnitOfWork : IUnitOfWork
     }
 
     /// <inheritdoc />
-    /// <exception cref="InvalidOperationException">Thrown when a transaction is already active.</exception>
+    /// <exception cref="InvalidOperationException">وقتی تراکنشی از قبل فعال باشد پرتاب می‌شود.</exception>
     public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
         if (_transaction is not null)
         {
-            throw new InvalidOperationException("A database transaction is already active.");
+            throw new InvalidOperationException("یک تراکنش دیتابیس از قبل فعال است.");
         }
 
         _transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
     }
 
     /// <inheritdoc />
-    /// <exception cref="InvalidOperationException">Thrown when no transaction is active.</exception>
+    /// <exception cref="InvalidOperationException">وقتی تراکنش فعالی وجود نداشته باشد پرتاب می‌شود.</exception>
     public async Task CommitAsync(CancellationToken cancellationToken = default)
     {
         if (_transaction is null)
         {
-            throw new InvalidOperationException("No active database transaction to commit.");
+            throw new InvalidOperationException("تراکنش دیتابیس فعالی برای commit وجود ندارد.");
         }
 
         IDbContextTransaction transaction = _transaction;
@@ -106,7 +106,7 @@ public class UnitOfWork : IUnitOfWork
         }
         finally
         {
-            // Disposing a transaction that failed to commit rolls it back on the server.
+            // Dispose کردن تراکنشی که commit آن ناموفق بوده، آن را روی سرور rollback می‌کند.
             await transaction.DisposeAsync();
         }
     }
@@ -114,9 +114,9 @@ public class UnitOfWork : IUnitOfWork
     /// <inheritdoc />
     public async Task RollbackAsync(CancellationToken cancellationToken = default)
     {
-        // Deliberately a no-op when no transaction is active: callers roll back from a
-        // catch block, and throwing here would mask the original failure (for example
-        // when the commit itself already disposed the transaction).
+        // عمداً وقتی تراکنش فعالی وجود ندارد هیچ کاری نمی‌کند: فراخوانندگان از داخل
+        // یک بلوک catch rollback می‌کنند و پرتاب کردن در اینجا خطای اصلی را می‌پوشاند
+        // (برای نمونه وقتی خودِ commit تراکنش را dispose کرده است).
         if (_transaction is null)
         {
             return;
@@ -130,8 +130,8 @@ public class UnitOfWork : IUnitOfWork
     }
 
     /// <summary>
-    /// Disposes the active transaction (if any) and the underlying database context.
-    /// The context is owned by this unit of work's scope; disposing it twice is harmless.
+    /// تراکنش فعال (در صورت وجود) و کانتکست دیتابیس زیرین را dispose می‌کند.
+    /// کانتکست متعلق به همین scope از unit of work است؛ دوبار dispose کردن آن بی‌ضرر است.
     /// </summary>
     public void Dispose()
     {

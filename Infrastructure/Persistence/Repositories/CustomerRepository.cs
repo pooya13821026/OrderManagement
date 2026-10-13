@@ -5,15 +5,15 @@ using OrderManagement.Domain.Repositories;
 namespace OrderManagement.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// EF Core implementation of <see cref="ICustomerRepository"/>. All queries that feed
-/// display code run without change tracking (<c>AsNoTracking</c>).
+/// پیاده‌سازی EF Core برای <see cref="ICustomerRepository"/>. همه‌ی پرس‌وجوهایی که کد نمایش
+/// را تغذیه می‌کنند بدون ردیابی تغییرات اجرا می‌شوند (<c>AsNoTracking</c>).
 /// </summary>
 public class CustomerRepository : EfRepository<Customer, Guid>, ICustomerRepository
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="CustomerRepository"/> class.
+    /// نمونه‌ای جدید از کلاس <see cref="CustomerRepository"/> می‌سازد.
     /// </summary>
-    /// <param name="context">The shared database context of the current scope.</param>
+    /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
     public CustomerRepository(OrderManagementDbContext context)
         : base(context)
     {
@@ -22,7 +22,7 @@ public class CustomerRepository : EfRepository<Customer, Guid>, ICustomerReposit
     /// <inheritdoc />
     public async Task<Customer?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        // Defensive: an empty lookup value can never match a stored address, so skip the query.
+        // دفاعی: مقدار جست‌وجوی خالی هرگز نمی‌تواند با آدرس ذخیره‌شده‌ای مطابقت کند، پس پرس‌وجو را رد می‌کنیم.
         if (string.IsNullOrWhiteSpace(email))
         {
             return null;
@@ -65,12 +65,13 @@ public class CustomerRepository : EfRepository<Customer, Guid>, ICustomerReposit
 
         int totalCount = await query.CountAsync(cancellationToken);
 
-        // Clamp the paging inputs so a caller mistake can never produce a negative Skip/Take.
+        // ورودی‌های صفحه‌بندی را محدود می‌کنیم تا اشتباه فراخواننده هرگز نتواند Skip/Take منفی تولید کند.
         int safePageNumber = Math.Max(pageNumber, 1);
         int safePageSize = Math.Max(pageSize, 1);
 
-        // A deterministic sort (name, then the unique email as tie breaker) keeps pages stable
-        // while paging - otherwise rows could appear or vanish between page requests.
+        // مرتب‌سازی قطعی (نام خانوادگی، سپس ایمیل یکتا به‌عنوان شکننده‌ی تساوی) صفحات را
+        // هنگام صفحه‌بندی پایدار نگه می‌دارد - در غیر این صورت ردیف‌ها ممکن است میان
+        // درخواست‌های صفحه ظاهر یا ناپدید شوند.
         IReadOnlyList<Customer> items = await query
             .OrderBy(customer => customer.LastName)
             .ThenBy(customer => customer.FirstName)

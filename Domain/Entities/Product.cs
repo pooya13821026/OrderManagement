@@ -1,57 +1,57 @@
 namespace OrderManagement.Domain.Entities;
 
 /// <summary>
-/// Represents a sellable product. SKU is unique across all products.
+/// نماینده‌ی یک محصول قابل فروش است. کد SKU در میان همه‌ی محصولات یکتاست.
 /// </summary>
 public class Product
 {
     /// <summary>
-    /// Unique identifier of the product.
+    /// شناسه‌ی یکتای محصول.
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Display name of the product.
+    /// نام نمایشی محصول.
     /// </summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
-    /// Optional long description of the product.
+    /// توضیحات بلند اختیاری محصول.
     /// </summary>
     public string? Description { get; set; }
 
     /// <summary>
-    /// Unit price of the product in the store currency.
+    /// قیمت واحد محصول به واحد پول فروشگاه.
     /// </summary>
     public decimal Price { get; set; }
 
     /// <summary>
-    /// Current number of units available in stock.
+    /// تعداد واحدهای موجود در انبار.
     /// </summary>
     public int StockQuantity { get; set; }
 
     /// <summary>
-    /// Stock keeping unit code. Unique, used for product lookups and duplicate checks.
+    /// کد نگه‌داری انبار (SKU). یکتاست و برای جست‌وجوی محصول و بررسی موارد تکراری استفاده می‌شود.
     /// </summary>
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>
-    /// Indicates whether the product is active and can be ordered. Defaults to <c>true</c>.
+    /// نشان می‌دهد محصول فعال است و می‌توان آن را سفارش داد. مقدار پیش‌فرض <c>true</c> است.
     /// </summary>
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// UTC timestamp when the product record was created.
+    /// زمان‌نشان UTC هنگام ایجاد رکورد محصول.
     /// </summary>
     public DateTime CreatedAt { get; set; }
 
     /// <summary>
-    /// UTC timestamp of the last update of the product record.
+    /// زمان‌نشان UTC آخرین به‌روزرسانی رکورد محصول.
     /// </summary>
     public DateTime UpdatedAt { get; set; }
 
     /// <summary>
-    /// Concurrency token managed by Entity Framework. A mismatch indicates a concurrent modification.
+    /// توکن همزمانی که توسط Entity Framework مدیریت می‌شود. ناهماهنگی آن نشان‌دهنده‌ی تغییر همزمان است.
     /// </summary>
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 }

@@ -3,26 +3,26 @@ using System.ComponentModel.DataAnnotations;
 namespace OrderManagement.Application.Dtos.Customers;
 
 /// <summary>
-/// Payload for updating an existing customer.
+/// بدنه‌ی درخواست برای به‌روزرسانی یک مشتری موجود.
 /// </summary>
 public class UpdateCustomerRequest
 {
     /// <summary>
-    /// Gets or sets the first name of the customer.
+    /// نام مشتری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(100)]
     public string FirstName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the last name of the customer.
+    /// نام خانوادگی مشتری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Required]
     [MaxLength(100)]
     public string LastName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the email address of the customer. Must stay unique.
+    /// آدرس ایمیل مشتری را می‌گیرد یا تنظیم می‌کند. باید یکتا باقی بماند.
     /// </summary>
     [Required]
     [EmailAddress]
@@ -30,14 +30,14 @@ public class UpdateCustomerRequest
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the optional phone number of the customer.
+    /// شماره تلفن اختیاری مشتری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [Phone]
     [MaxLength(20)]
     public string? Phone { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional postal address of the customer.
+    /// آدرس پستی اختیاری مشتری را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     [MaxLength(500)]
     public string? Address { get; set; }

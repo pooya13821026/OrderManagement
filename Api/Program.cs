@@ -6,8 +6,8 @@ using OrderManagement.Infrastructure.Persistence;
 using OrderManagement.Infrastructure.Persistence.Seed;
 using Serilog;
 
-// Bootstrap logger: active before the host is built, so configuration or DI failures
-// during startup still end up in the console (the full Serilog pipeline takes over later).
+// لاگر bootstrap: پیش از ساخته شدن host فعال است، بنابراین خطاهای پیکربندی یا DI
+// هنگام startup هم در کنسول ثبت می‌شوند (خط لوله‌ی کامل Serilog بعداً جایگزین می‌شود).
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
     .CreateBootstrapLogger();
@@ -16,27 +16,27 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // Configuration sources: appsettings.json plus the environment-specific overlay
-    // (appsettings.{Environment}.json) and environment variables, in that precedence order.
+    // منابع پیکربندی: appsettings.json به‌علاوه‌ی لایه‌ی مخصوص محیط
+    // (appsettings.{Environment}.json) و متغیرهای محیطی، با همین ترتیب اولویت.
     builder.Configuration
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
         .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
         .AddEnvironmentVariables();
 
-    // Persistence, repositories, password hasher and JWT token service (Infrastructure).
+    // پایداری، repository ها، هش‌کننده‌ی رمز عبور و سرویس توکن JWT (Infrastructure).
     builder.Services.AddInfrastructure(builder.Configuration);
-    // MVC, Swagger, JWT bearer authentication, authorization and Serilog (Api).
+    // MVC، Swagger، احراز هویت bearer مربوط به JWT، مجوزدهی و Serilog (Api).
     builder.Services.AddApiServices(builder.Configuration);
-    // Application services consumed by the controllers.
+    // سرویس‌های برنامه که کنترلرها از آن‌ها استفاده می‌کنند.
     builder.Services.AddApplicationServices();
 
     WebApplication app = builder.Build();
 
-    // Must run first: it turns any exception thrown further down the pipeline,
-    // including authorization and controller failures, into a problem-details response.
+    // باید اول اجرا شود: هر استثنایی که در ادامه‌ی خط لوله پرتاب شود، از جمله
+    // خطا‌های مجوزدهی و کنترلرها، به یک پاسخ problem-details تبدیل می‌کند.
     app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-    // Structured request logging (method, path, status code, elapsed time) through Serilog.
+    // لاگ‌گیری ساخت‌یافته‌ی درخواست‌ها (متد، مسیر، کد وضعیت، زمان سپری‌شده) از طریق Serilog.
     app.UseSerilogRequestLogging();
 
     if (app.Environment.IsDevelopment())
@@ -45,40 +45,40 @@ try
         app.UseSwaggerUI();
     }
 
-    // Order matters: the JWT bearer middleware authenticates the request and builds the
-    // ClaimsPrincipal (including the mapped role claim) before authorization runs.
+    // ترتیب مهم است: middleware مربوط به JWT bearer درخواست را احراز هویت می‌کند و
+    // ClaimsPrincipal (شامل claim نگاشته‌شده‌ی نقش) را پیش از اجرای authorization می‌سازد.
     app.UseAuthentication();
     app.UseAuthorization();
 
     app.MapControllers();
 
-    // Apply pending EF Core migrations and seed reference data. Failures are logged but
-    // do not keep the host from starting, so the API stays reachable while the DB is down.
+    // migration های معلق EF Core را اعمال و داده‌ی مرجع را داده‌کاشت می‌کند. خطاها لاگ
+    // می‌شوند اما مانع بالا آمدن host نمی‌شوند، بنابراین API در حالت از کار افتادن DB هم در دسترس می‌ماند.
     await InitializeDatabaseAsync(app);
 
-    // Fires once the server is listening; reports the addresses Kestrel actually bound.
+    // یک بار پس از گوش دادن سرور اجرا می‌شود؛ آدرس‌هایی که Kestrel واقعاً bind کرده را گزارش می‌دهد.
     app.Services
         .GetRequiredService<IHostApplicationLifetime>()
         .ApplicationStarted.Register(() =>
             Log.Information(
-                "Application started. Listening on: {ListeningUrls}",
+                "برنامه بالا آمد. در حال گوش دادن روی: {ListeningUrls}",
                 app.Urls.Count > 0 ? string.Join(", ", app.Urls) : "(default Kestrel endpoints)"));
 
-    Log.Information("Starting Order Management API in {Environment} environment.", app.Environment.EnvironmentName);
+    Log.Information("در حال راه‌اندازی Order Management API در محیط {Environment}.", app.Environment.EnvironmentName);
     await app.RunAsync();
 }
 catch (Exception exception)
 {
-    Log.Fatal(exception, "Order Management API terminated unexpectedly during startup.");
+    Log.Fatal(exception, "Order Management API هنگام startup به‌صورت غیرمنتظره پایان یافت.");
 }
 finally
 {
     Log.CloseAndFlush();
 }
 
-// Creates a DI scope, applies pending database migrations and runs the idempotent seeder.
-// Both steps are wrapped in a try/catch so an unavailable database is reported through
-// Serilog instead of crashing the host.
+// یک DI scope می‌سازد، migration های معلق دیتابیس را اعمال و seeder idempotent را اجرا می‌کند.
+// هر دو مرحله داخل یک try/catch قرار دارند تا در دسترس نبودن دیتابیس از طریق
+// Serilog گزارش شود به‌جای اینکه host را از کار بیندازد.
 static async Task InitializeDatabaseAsync(WebApplication app)
 {
     using IServiceScope scope = app.Services.CreateScope();
@@ -92,6 +92,6 @@ static async Task InitializeDatabaseAsync(WebApplication app)
     }
     catch (Exception exception)
     {
-        logger.LogError(exception, "Database migration/seed failed during startup; the API will start anyway.");
+        logger.LogError(exception, "migration/seed دیتابیس هنگام startup ناموفق بود؛ API به هر حال بالا می‌آید.");
     }
 }

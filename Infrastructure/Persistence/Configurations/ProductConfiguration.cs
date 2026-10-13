@@ -5,8 +5,8 @@ using OrderManagement.Domain.Entities;
 namespace OrderManagement.Infrastructure.Persistence.Configurations;
 
 /// <summary>
-/// Maps <see cref="Product"/> to the <c>Products</c> table: unique SKU, decimal price,
-/// non-negative price/stock check constraints and the row version.
+/// <see cref="Product"/> را روی جدول <c>Products</c> نگاشت می‌کند: SKU یکتا، قیمت اعشاری،
+/// قیدهای check برای قیمت/موجودی غیرمنفی و نسخه‌ی ردیف.
 /// </summary>
 public class ProductConfiguration : IEntityTypeConfiguration<Product>
 {
@@ -15,7 +15,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
     {
         builder.ToTable("Products", table =>
         {
-            // Invariants are re-checked by the database so no code path can bypass them.
+            // ثابت‌ها توسط دیتابیس دوباره بررسی می‌شوند تا هیچ مسیر کدی نتواند آن‌ها را دور بزند.
             table.HasCheckConstraint("CK_Products_Price", "Price >= 0");
             table.HasCheckConstraint("CK_Products_StockQuantity", "StockQuantity >= 0");
         });
@@ -31,7 +31,7 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(product => product.CreatedAt).IsRequired();
         builder.Property(product => product.UpdatedAt).IsRequired();
 
-        // SKU uniqueness is enforced by the database, mirroring the service duplicate guard.
+        // یکتایی SKU توسط دیتابیس اعمال می‌شود، هم‌سان با نگهبان تکرار سرویس.
         builder.HasIndex(product => product.Sku).IsUnique();
 
         builder.Property(product => product.RowVersion).IsRowVersion();
