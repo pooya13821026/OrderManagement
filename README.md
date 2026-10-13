@@ -16,13 +16,14 @@ API مدیریت سفارش‌های یک فروشگاه آنلاین با **Cle
 | حذف سفارش فقط Admin | ✅ |
 | Bulk Insert سفارش‌ها (نتیجه تکی هر سفارش) | ✅ |
 | مدل مشتری/محصول/موجودی + سید ۵۰ مشتری و ۲۰۰ محصول | ✅ (تأییدشده روی SQL Server) |
+| دسته‌بندی محصول (Category CRUD + فیلتر CategoryId اختیاری) | ✅ |
 | چک موجودی قبل از Confirm + جلوگیری از گذار غیرمجاز | ✅ |
 | Clean Architecture چهارلایه (Domain، Application، Infrastructure، API) | ✅ |
 | EF Core Code First + Migration + Seed | ✅ |
 | JWT با نقش‌های Admin و User (ثبت‌نام/ورود/refresh/ابطال واقعی) | ✅ |
 | AsNoTracking، تراکنش، Bulk بهینه | ✅ |
 | Swagger + Postman Collection | ✅ |
-| Unit Test سرویس‌ها و منطق کسب‌وکار (۴۷ تست سبز) | ✅ |
+| Unit Test سرویس‌ها و منطق کسب‌وکار (۵۵ تست سبز) | ✅ |
 
 ## معماری و تصمیمات طراحی
 
@@ -91,7 +92,7 @@ docker compose up --build
 
 - API روی `http://localhost:8080` (Swagger روی همان)
 - SQL Server روی پورت 1433 (کاربر `sa`، رمز `Order@12345` — فقط توسعه)
-- مایگریشن و سید (۲ کاربر، ۵۰ مشتری، ۲۰۰ محصول) موقع بالا آمدن خودکار اجرا می‌شود
+- مایگریشن و سید (۲ کاربر، ۵۰ مشتری، ۸ دسته، ۲۰۰ محصول) موقع بالا آمدن خودکار اجرا می‌شود
 
 ## اجرای تست‌ها
 
@@ -99,7 +100,7 @@ docker compose up --build
 dotnet test OrderManagement.slnx
 ```
 
-نتیجه موردانتظار: `Passed! - Failed: 0, Passed: 47, Skipped: 0` (تست‌های واحد خالص با xUnit و Moq، بدون دیتابیس).
+نتیجه موردانتظار: `Passed! - Failed: 0, Passed: 55, Skipped: 0` (تست‌های واحد خالص با xUnit و Moq، بدون دیتابیس).
 
 ## دریافت توکن JWT تستی
 
@@ -136,6 +137,7 @@ Invoke-RestMethod http://localhost:8080/api/orders -Headers @{ Authorization = "
 | PATCH `/api/orders/{id}/status` (`{newStatus}`) | احرازشده (لغو فقط Admin) |
 | DELETE `/api/orders/{id}` — POST `/api/orders/bulk` | Admin |
 | GET `/api/customers` ،`/{id}` — POST/PUT/DELETE | خواندن احرازشده، نوشتن Admin |
+| GET `/api/categories` ،`/{id}` — POST/PUT/DELETE | خواندن احرازشده، نوشتن Admin |
 | GET `/api/products` ،`/{id}` — POST/PUT/DELETE | خواندن احرازشده، نوشتن Admin |
 | PATCH `/api/products/{id}/stock` (`{quantityChange}`) | Admin |
 
@@ -146,7 +148,7 @@ Domain/            انتیتی‌ها، انام‌ها، استثناها، ق
 Application/       DTOها، اینترفیس‌ها، سرویس‌ها، مپینگ، ولیدیشن
 Infrastructure/    DbContext، کانفیگ‌ها، ریپازیتوری‌ها، UnitOfWork، امنیت، سید، مایگریشن‌ها
 Api/               کنترلرها، میدلور، تنظیمات DI، appsettings، Dockerfile
-Application.Tests/ ۴۷ تست واحد (OrderService، AuthService، ProductService)
+Application.Tests/ ۵۵ تست واحد (OrderService، AuthService، ProductService، CategoryService)
 postman/           کالکشن ۲۲ درخواستی + environment
 docker-compose.yml SQL Server 2022 + API
 ```

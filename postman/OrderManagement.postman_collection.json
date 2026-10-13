@@ -10,6 +10,7 @@
     { "key": "refreshToken", "value": "", "type": "string" },
     { "key": "customerId", "value": "", "type": "string" },
     { "key": "productId", "value": "", "type": "string" },
+    { "key": "categoryId", "value": "", "type": "string" },
     { "key": "orderId", "value": "", "type": "string" }
   ],
   "item": [
@@ -528,6 +529,151 @@
       ]
     },
     {
+      "name": "Categories",
+      "description": "مدیریت دسته‌بندی محصولات: خواندن (GET) برای هر کاربر احرازهویت‌شده؛ ایجاد/ویرایش/حذف فقط با نقش Admin. شناسه‌ی دسته در متغیر categoryId ذخیره می‌شود و برای فیلتر List Products هم می‌توانید از آن استفاده کنید.",
+      "item": [
+        {
+          "name": "Create Category - ایجاد دسته [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"کالای دیجیتال\",\n  \"description\": \"محصولات دیجیتال و لوازم جانبی\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"]
+            },
+            "description": "ایجاد دسته جدید (پاسخ 201)؛ فقط مدیر. نام تکراری 409 برمی‌گرداند (در اجرای مجدد نام را تغییر دهید). شناسه‌ی دسته در متغیر categoryId ذخیره می‌شود."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// شناسه‌ی دسته ایجادشده برای سایر درخواست‌ها ذخیره می‌شود.",
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set(\"categoryId\", data.id);",
+                  "    try { pm.environment.set(\"categoryId\", data.id); } catch (e) { /* environment انتخاب نشده */ }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Categories - فهرست دسته‌ها",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories?pageNumber=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories"],
+              "query": [
+                { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
+                { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
+                { "key": "searchTerm", "value": "دیجیتال", "disabled": true, "description": "جست‌وجو در نام و توضیحات؛ برای استفاده enable کنید" },
+                { "key": "isActive", "value": "true", "disabled": true, "description": "فیلتر فعال/غیرفعال؛ خالی = همه؛ برای استفاده enable کنید" }
+              ]
+            },
+            "description": "فهرست صفحه‌بندی‌شده‌ی دسته‌ها (پاسخ 200). پارامترهای pageNumber و pageSize و فیلترهای اختیاری searchTerm و isActive؛ برای فعال‌سازی فیلترها کافی است پارامتر مربوطه را enable کنید."
+          }
+        },
+        {
+          "name": "Get Category By Id - دریافت دسته",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "{{categoryId}}"]
+            },
+            "description": "دریافت یک دسته با شناسه (پاسخ 200). دسته ناموجود 404 برمی‌گرداند؛ متغیر categoryId را از Create Category یا فهرست بردارید."
+          }
+        },
+        {
+          "name": "Update Category - ویرایش دسته [Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"کالای دیجیتال و لوازم جانبی\",\n  \"description\": \"به‌روزرسانی‌شده از Postman\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "{{categoryId}}"]
+            },
+            "description": "ویرایش کامل دسته (پاسخ 200)؛ فقط مدیر. فیلد name الزامی است. دسته ناموجود 404 و نام تکراری (متعلق به دسته دیگر) 409 برمی‌گرداند."
+          }
+        },
+        {
+          "name": "Delete Category - حذف دسته [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "categories", "{{categoryId}}"]
+            },
+            "description": "حذف دسته (پاسخ 204)؛ فقط مدیر. دسته‌ای که محصولی به آن متصل است به‌خاطر محدودیت کلید خارجی قابل حذف نیست (پاسخ خطای سرور)؛ برای مشاهده‌ی موفقیت، دسته بدون محصول (مثلاً همین دسته‌ی تازه ایجادشده) را حذف کنید. دسته ناموجود 404 است."
+          }
+        }
+      ]
+    },
+    {
       "name": "Products",
       "description": "کاتالوگ محصول: خواندن (GET) برای هر کاربر احرازهویت‌شده؛ ایجاد/ویرایش/حذف/اصلاح موجودی فقط با نقش Admin. موجودی از مسیر PATCH stock تغییر می‌کند، نه از PUT.",
       "item": [
@@ -596,10 +742,11 @@
                 { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
                 { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
                 { "key": "searchTerm", "value": "PM", "disabled": true, "description": "جست‌وجو در نام/توضیحات/SKU محصول؛ برای استفاده enable کنید" },
-                { "key": "isActive", "value": "true", "disabled": true, "description": "فیلتر فعال/غیرفعال؛ خالی = همه؛ برای استفاده enable کنید" }
+                { "key": "isActive", "value": "true", "disabled": true, "description": "فیلتر فعال/غیرفعال؛ خالی = همه؛ برای استفاده enable کنید" },
+                { "key": "categoryId", "value": "{{categoryId}}", "disabled": true, "description": "فیلتر دسته‌بندی محصول؛ از Categories بسازید و سپس enable کنید" }
               ]
             },
-            "description": "فهرست صفحه‌بندی‌شده‌ی محصولات (پاسخ 200). پارامترهای pageNumber و pageSize و فیلترهای اختیاری searchTerm و isActive؛ برای فعال‌سازی فیلترها کافی است پارامتر مربوطه را enable کنید."
+            "description": "فهرست صفحه‌بندی‌شده‌ی محصولات (پاسخ 200). پارامترهای pageNumber و pageSize و فیلترهای اختیاری searchTerm و isActive و CategoryId؛ برای فعال‌سازی فیلترها کافی است پارامتر مربوطه را enable کنید."
           }
         },
         {

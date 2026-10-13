@@ -39,6 +39,7 @@ public static class ServiceCollectionExtensions
             options.UseSqlServer(connectionString));
 
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IOrderItemRepository, OrderItemRepository>();

@@ -36,6 +36,16 @@ public class Product
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>
+    /// شناسه‌ی اختیاری دسته‌بندی محصول. <c>null</c> یعنی محصول هنوز دسته‌بندی نشده است.
+    /// </summary>
+    public Guid? CategoryId { get; set; }
+
+    /// <summary>
+    /// دسته‌بندی اختیاری که محصول به آن تعلق دارد.
+    /// </summary>
+    public Category? Category { get; set; }
+
+    /// <summary>
     /// نشان می‌دهد محصول فعال است و می‌توان آن را سفارش داد. مقدار پیش‌فرض <c>true</c> است.
     /// </summary>
     public bool IsActive { get; set; } = true;

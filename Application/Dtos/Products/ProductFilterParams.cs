@@ -16,4 +16,9 @@ public class ProductFilterParams : PaginationParams
     /// فیلتر اختیاری پرچم فعال بودن را می‌گیرد یا تنظیم می‌کند؛ <c>null</c> هم محصولات فعال و هم غیرفعال را برمی‌گرداند.
     /// </summary>
     public bool? IsActive { get; set; }
+
+    /// <summary>
+    /// فیلتر اختیاری شناسه‌ی دسته‌بندی را می‌گیرد یا تنظیم می‌کند؛ <c>null</c> محصولات همه‌ی دسته‌ها را برمی‌گرداند.
+    /// </summary>
+    public Guid? CategoryId { get; set; }
 }

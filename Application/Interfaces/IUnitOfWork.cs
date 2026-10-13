@@ -14,6 +14,11 @@ public interface IUnitOfWork : IDisposable
     ICustomerRepository Customers { get; }
 
     /// <summary>
+    /// مخزن موجودیت‌های دسته‌بندی را برمی‌گرداند.
+    /// </summary>
+    ICategoryRepository Categories { get; }
+
+    /// <summary>
     /// مخزن موجودیت‌های محصول را برمی‌گرداند.
     /// </summary>
     IProductRepository Products { get; }

@@ -51,6 +51,8 @@ public class ProductService : IProductService
             throw new DomainException("موجودی محصول نباید منفی باشد.");
         }
 
+        Guid? categoryId = await ResolveCategoryIdAsync(request.CategoryId, cancellationToken);
+
         DateTime now = DateTime.UtcNow;
         var product = new Product
         {
@@ -60,6 +62,7 @@ public class ProductService : IProductService
             Price = request.Price,
             StockQuantity = request.StockQuantity,
             Sku = normalizedSku,
+            CategoryId = categoryId,
             IsActive = request.IsActive,
             CreatedAt = now,
             UpdatedAt = now
@@ -91,6 +94,7 @@ public class ProductService : IProductService
         PagedEntities<Product> page = await _unitOfWork.Products.GetPagedAsync(
             string.IsNullOrWhiteSpace(filter.SearchTerm) ? null : filter.SearchTerm.Trim(),
             filter.IsActive,
+            filter.CategoryId,
             filter.PageNumber,
             filter.PageSize,
             cancellationToken);
@@ -114,6 +118,8 @@ public class ProductService : IProductService
             throw new DomainException("قیمت محصول باید بزرگ‌تر از صفر باشد.");
         }
 
+        Guid? categoryId = await ResolveCategoryIdAsync(request.CategoryId, cancellationToken);
+
         string normalizedSku = request.Sku.Trim();
         if (!string.Equals(product.Sku, normalizedSku, StringComparison.OrdinalIgnoreCase)
             && await _unitOfWork.Products.ExistsBySkuAsync(normalizedSku, cancellationToken))
@@ -125,6 +131,7 @@ public class ProductService : IProductService
         product.Description = request.Description?.Trim();
         product.Price = request.Price;
         product.Sku = normalizedSku;
+        product.CategoryId = categoryId;
         product.IsActive = request.IsActive;
         product.UpdatedAt = DateTime.UtcNow;
 
@@ -173,5 +180,27 @@ public class ProductService : IProductService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return product.ToDto();
+    }
+
+    /// <summary>
+    /// شناسه‌ی دسته‌بندی درخواستی را اعتبارسنجی می‌کند: <c>null</c> بدون دسته معتبر است؛
+    /// اگر مقدار داده شده باشد باید دسته‌ای با همان شناسه وجود داشته باشد، وگرنه
+    /// <see cref="EntityNotFoundException"/> پرتاب می‌شود.
+    /// </summary>
+    /// <param name="categoryId">شناسه‌ی اختیاری دسته‌بندی درخواستی.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>شناسه‌ی معتبر دسته، یا <c>null</c> وقتی بدون دسته باشد.</returns>
+    /// <exception cref="EntityNotFoundException">وقتی دسته‌ای با این شناسه وجود نداشته باشد پرتاب می‌شود.</exception>
+    private async Task<Guid?> ResolveCategoryIdAsync(Guid? categoryId, CancellationToken cancellationToken)
+    {
+        if (!categoryId.HasValue)
+        {
+            return null;
+        }
+
+        _ = await _unitOfWork.Categories.GetByIdAsync(categoryId.Value, cancellationToken)
+            ?? throw new EntityNotFoundException(nameof(Category), categoryId.Value);
+
+        return categoryId;
     }
 }

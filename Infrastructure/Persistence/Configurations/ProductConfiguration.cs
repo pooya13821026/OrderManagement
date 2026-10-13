@@ -34,6 +34,16 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         // یکتایی SKU توسط دیتابیس اعمال می‌شود، هم‌سان با نگهبان تکرار سرویس.
         builder.HasIndex(product => product.Sku).IsUnique();
 
+        // ایندکس پشتیبان فیلتر «بر اساس دسته» در فهرست محصولات.
+        builder.HasIndex(product => product.CategoryId);
+
+        // اتصال دسته اختیاری است؛ حذف دسته‌ای که محصول دارد restrict می‌شود
+        // (هم‌سان با سیاست موجود برای کلیدهای خارجی غیرcascade در این دیتابیس).
+        builder.HasOne(product => product.Category)
+            .WithMany(category => category.Products)
+            .HasForeignKey(product => product.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.Property(product => product.RowVersion).IsRowVersion();
     }
 }

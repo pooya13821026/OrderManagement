@@ -27,6 +27,11 @@ public class OrderManagementDbContext : DbContext
     public DbSet<Customer> Customers => Set<Customer>();
 
     /// <summary>
+    /// دسته‌بندی‌های کاتالوگ را دریافت می‌کند.
+    /// </summary>
+    public DbSet<Category> Categories => Set<Category>();
+
+    /// <summary>
     /// محصولات کاتالوگ را دریافت می‌کند.
     /// </summary>
     public DbSet<Product> Products => Set<Product>();

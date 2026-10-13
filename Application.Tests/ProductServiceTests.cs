@@ -17,14 +17,16 @@ public class ProductServiceTests
 {
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IProductRepository> _productRepository = new();
+    private readonly Mock<ICategoryRepository> _categoryRepository = new();
     private readonly ProductService _service;
 
     /// <summary>
-    /// نمونه‌ای جدید می‌سازد و مخزن محصولات واحد کاری را به مخزن شبیه‌سازی‌شده وصل می‌کند.
+    /// نمونه‌ای جدید می‌سازد و مخزن‌های محصولات و دسته‌های واحد کاری را به مخزن‌های شبیه‌سازی‌شده وصل می‌کند.
     /// </summary>
     public ProductServiceTests()
     {
         _unitOfWork.SetupGet(u => u.Products).Returns(_productRepository.Object);
+        _unitOfWork.SetupGet(u => u.Categories).Returns(_categoryRepository.Object);
         _unitOfWork.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         _service = new ProductService(_unitOfWork.Object);
@@ -102,6 +104,86 @@ public class ProductServiceTests
 
         _productRepository.Verify(r => r.AddAsync(It.IsAny<Product>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// ایجاد محصول با دسته معتبر باید شناسه‌ی دسته را روی محصول ست کند.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_WithValidCategory_SetsCategoryId()
+    {
+        Guid categoryId = Guid.NewGuid();
+        var category = new Category { Id = categoryId, Name = "کالای دیجیتال", IsActive = true };
+        _productRepository.Setup(r => r.ExistsBySkuAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _categoryRepository.Setup(r => r.GetByIdAsync(categoryId, It.IsAny<CancellationToken>())).ReturnsAsync(category);
+
+        var request = new CreateProductRequest
+        {
+            Name = "Laptop",
+            Sku = "SKU-CAT-1",
+            Price = 1000m,
+            StockQuantity = 4,
+            CategoryId = categoryId
+        };
+
+        ProductDto result = await _service.CreateAsync(request);
+
+        Assert.Equal(categoryId, result.CategoryId);
+        _productRepository.Verify(
+            r => r.AddAsync(It.Is<Product>(p => p.CategoryId == categoryId), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// ایجاد محصول با دسته ناموجود باید EntityNotFoundException پرتاب کند و محصولی اضافه نشود.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_WithUnknownCategory_ThrowsNotFound()
+    {
+        Guid unknownCategoryId = Guid.NewGuid();
+        _productRepository.Setup(r => r.ExistsBySkuAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _categoryRepository.Setup(r => r.GetByIdAsync(unknownCategoryId, It.IsAny<CancellationToken>())).ReturnsAsync((Category?)null);
+
+        var request = new CreateProductRequest
+        {
+            Name = "Laptop",
+            Sku = "SKU-CAT-2",
+            Price = 1000m,
+            StockQuantity = 4,
+            CategoryId = unknownCategoryId
+        };
+
+        await Assert.ThrowsAsync<EntityNotFoundException>(() => _service.CreateAsync(request));
+
+        _productRepository.Verify(r => r.AddAsync(It.IsAny<Product>(), It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// صفحه‌بندی محصولات باید فیلتر دسته را به مخزن پاس دهد.
+    /// </summary>
+    [Fact]
+    public async Task GetPagedAsync_ByCategory_FiltersThroughRepository()
+    {
+        Guid categoryId = Guid.NewGuid();
+        var product = CreateProduct(stockQuantity: 5);
+        product.CategoryId = categoryId;
+        var entities = new PagedEntities<Product>(new List<Product> { product }, totalCount: 1);
+
+        _productRepository
+            .Setup(r => r.GetPagedAsync(null, null, categoryId, 1, 10, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(entities);
+
+        var filter = new ProductFilterParams { CategoryId = categoryId, PageNumber = 1, PageSize = 10 };
+
+        var page = await _service.GetPagedAsync(filter);
+
+        Assert.Equal(1, page.TotalCount);
+        Assert.Equal(categoryId, page.Items[0].CategoryId);
+        _productRepository.Verify(
+            r => r.GetPagedAsync(null, null, categoryId, 1, 10, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     /// <summary>

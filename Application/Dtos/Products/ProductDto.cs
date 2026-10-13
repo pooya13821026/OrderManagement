@@ -36,6 +36,16 @@ public class ProductDto
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>
+    /// شناسه‌ی اختیاری دسته‌بندی محصول را می‌گیرد یا تنظیم می‌کند؛ <c>null</c> یعنی بدون دسته.
+    /// </summary>
+    public Guid? CategoryId { get; set; }
+
+    /// <summary>
+    /// نام نمایشی دسته‌بندی محصول را می‌گیرد یا تنظیم می‌کند؛ وقتی محصول دسته نداشته باشد خالی است.
+    /// </summary>
+    public string? CategoryName { get; set; }
+
+    /// <summary>
     /// مقداری که نشان می‌دهد محصول فعال است را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public bool IsActive { get; set; }

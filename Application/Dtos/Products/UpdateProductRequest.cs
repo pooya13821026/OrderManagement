@@ -36,6 +36,11 @@ public class UpdateProductRequest
     public string Sku { get; set; } = string.Empty;
 
     /// <summary>
+    /// شناسه‌ی اختیاری دسته‌بندی محصول را می‌گیرد یا تنظیم می‌کند؛ <c>null</c> یعنی بدون دسته.
+    /// </summary>
+    public Guid? CategoryId { get; set; }
+
+    /// <summary>
     /// مقداری که نشان می‌دهد محصول فعال است را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
     public bool IsActive { get; set; } = true;

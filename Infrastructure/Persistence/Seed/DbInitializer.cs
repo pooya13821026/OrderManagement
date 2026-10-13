@@ -9,9 +9,9 @@ namespace OrderManagement.Infrastructure.Persistence.Seed;
 
 /// <summary>
 /// داده‌کاشت idempotent دیتابیس: روی یک دیتابیس خالی دو حساب بوت‌استرپ (یکی برای هر نقش)،
-/// دقیقاً ۵۰ مشتری و ۲۰۰ محصول را با یک seed قطعی Bogus می‌سازد و در هر اجرای بعدی فقط
-/// ردیف‌های غایب را اضافه می‌کند. هیچ migration ای اینجا اعمال نمی‌شود - این مسئولیت
-/// فراخواننده است.
+/// دقیقاً ۵۰ مشتری و ۲۰۰ محصول را با یک seed قطعی Bogus و دسته‌های ثابت کاتالوگ می‌سازد
+/// و در هر اجرای بعدی فقط ردیف‌های غایب را اضافه می‌کند. هیچ migration ای اینجا اعمال
+/// نمی‌شود - این مسئولیت فراخواننده است.
 /// </summary>
 public static class DbInitializer
 {
@@ -43,7 +43,7 @@ public static class DbInitializer
     private const string UserPassword = "User@123";
 
     /// <summary>
-    /// کاربران، مشتریان و محصولات را به‌صورت idempotent داده‌کاشت می‌کند. ردیف‌های موجود
+    /// کاربران، مشتریان، دسته‌ها و محصولات را به‌صورت idempotent داده‌کاشت می‌کند. ردیف‌های موجود
     /// هرگز لمس نمی‌شوند؛ یک دیتابیس نیمه‌کاشت‌شده تا دقیقاً ۵۰ مشتری و ۲۰۰ محصول کامل می‌شود.
     /// </summary>
     /// <param name="context">کانتکست دیتابیسی که باید داده‌کاشت شود.</param>
@@ -60,6 +60,7 @@ public static class DbInitializer
 
         int createdUsers = await SeedUsersAsync(context, cancellationToken);
         int createdCustomers = await SeedCustomersAsync(context, cancellationToken);
+        int createdCategories = await SeedCategoriesAsync(context, cancellationToken);
         int createdProducts = await SeedProductsAsync(context, cancellationToken);
 
         // یک ذخیره‌ی واحد کل داده‌کاشت را اتمیک نگه می‌دارد: یا همه‌ی ردیف‌ها می‌نشینند یا هیچ‌کدام.
@@ -67,18 +68,22 @@ public static class DbInitializer
 
         int userCount = await context.Users.CountAsync(cancellationToken);
         int customerCount = await context.Customers.CountAsync(cancellationToken);
+        int categoryCount = await context.Categories.CountAsync(cancellationToken);
         int productCount = await context.Products.CountAsync(cancellationToken);
 
         // نقش‌ها رشته‌های ساده روی ردیف کاربرند (مدل دامنه جدول نقش ندارد)،
         // بنابراین «ایجاد نقش‌ها» یعنی تضمین وجود یک حساب داده‌کاشت‌شده برای هر نقش شناخته‌شده.
         logger.LogInformation(
             "داده‌کاشت پایان یافت: نقش‌ها [{Roles}]; {UserCount} کاربر ({CreatedUsers} ایجاد شد)، " +
-            "{CustomerCount} مشتری ({CreatedCustomers} ایجاد شد)، {ProductCount} محصول ({CreatedProducts} ایجاد شد).",
+            "{CustomerCount} مشتری ({CreatedCustomers} ایجاد شد)، {CategoryCount} دسته ({CreatedCategories} ایجاد شد)، " +
+            "{ProductCount} محصول ({CreatedProducts} ایجاد شد).",
             string.Join(", ", new[] { Roles.Admin, Roles.User }),
             userCount,
             createdUsers,
             customerCount,
             createdCustomers,
+            categoryCount,
+            createdCategories,
             productCount,
             createdProducts);
     }
@@ -168,6 +173,52 @@ public static class DbInitializer
         }
 
         return missingCount;
+    }
+
+    /// <summary>
+    /// جدول دسته‌بندی‌ها را با نام‌های فارسی کوتاه کاتالوگ (مثلاً کالای دیجیتال، پوشاک، کتاب و…)
+    /// پر می‌کند. این روش idempotent است: دسته‌هایی که از قبل با همان نام وجود دارند
+    /// دوباره اضافه نمی‌شوند. محصولات موجود عمداً به این دسته‌ها متصل نمی‌شوند تا رفتار
+    /// موجود (بدون دسته) حفظ شود.
+    /// </summary>
+    /// <param name="context">کانتکست دیتابیس.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>تعداد دسته‌هایی که ایجاد شدند.</returns>
+    private static async Task<int> SeedCategoriesAsync(OrderManagementDbContext context, CancellationToken cancellationToken)
+    {
+        string[] categoryNames =
+        [
+            "کالای دیجیتال",
+            "پوشاک",
+            "کتاب",
+            "لوازم‌خانگی",
+            "ورزشی",
+            "زیبایی و بهداشت",
+            "خوراکی",
+            "اسباب‌بازی"
+        ];
+
+        int created = 0;
+        foreach (string name in categoryNames)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (await context.Categories.AnyAsync(category => category.Name == name, cancellationToken))
+            {
+                continue;
+            }
+
+            context.Categories.Add(new Category
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                Description = $"دسته‌بندی {name} کاتالوگ.",
+                IsActive = true
+            });
+            created++;
+        }
+
+        return created;
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 using OrderManagement.Application.Dtos.Auth;
+using OrderManagement.Application.Dtos.Categories;
 using OrderManagement.Application.Dtos.Customers;
 using OrderManagement.Application.Dtos.Orders;
 using OrderManagement.Application.Dtos.Products;
@@ -35,7 +36,28 @@ public static class MappingExtensions
     }
 
     /// <summary>
-    /// موجودیت <see cref="Product"/> را به <see cref="ProductDto"/> نگاشت می‌کند.
+    /// موجودیت <see cref="Category"/> را به <see cref="CategoryDto"/> نگاشت می‌کند.
+    /// </summary>
+    /// <param name="category">موجودیت دسته‌ای که باید نگاشت شود.</param>
+    /// <returns>DTO دسته.</returns>
+    public static CategoryDto ToDto(this Category category)
+    {
+        ArgumentNullException.ThrowIfNull(category);
+
+        return new CategoryDto
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            IsActive = category.IsActive,
+            CreatedAt = category.CreatedAt,
+            UpdatedAt = category.UpdatedAt
+        };
+    }
+
+    /// <summary>
+    /// موجودیت <see cref="Product"/> را به <see cref="ProductDto"/> نگاشت می‌کند،
+    /// شامل شناسه و نام دسته در صورت اتصال.
     /// </summary>
     /// <param name="product">موجودیت محصولی که باید نگاشت شود.</param>
     /// <returns>DTO محصول.</returns>
@@ -51,6 +73,8 @@ public static class MappingExtensions
             Price = product.Price,
             StockQuantity = product.StockQuantity,
             Sku = product.Sku,
+            CategoryId = product.CategoryId,
+            CategoryName = product.Category?.Name,
             IsActive = product.IsActive,
             CreatedAt = product.CreatedAt,
             UpdatedAt = product.UpdatedAt

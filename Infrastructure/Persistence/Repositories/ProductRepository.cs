@@ -49,6 +49,7 @@ public class ProductRepository : EfRepository<Product, Guid>, IProductRepository
     public async Task<PagedEntities<Product>> GetPagedAsync(
         string? searchTerm,
         bool? isActive,
+        Guid? categoryId,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -64,6 +65,13 @@ public class ProductRepository : EfRepository<Product, Guid>, IProductRepository
         if (isActive.HasValue)
         {
             query = query.Where(product => product.IsActive == isActive.Value);
+        }
+
+        if (categoryId.HasValue)
+        {
+            // فقط محصولات همین دسته (نه محصولات بدون دسته)؛ null CategoryId با null مقایسه نمی‌شود
+            // چون == روی Guid? در LINQ-to-Entities به IS NULL تبدیل نمی‌شود.
+            query = query.Where(product => product.CategoryId == categoryId.Value);
         }
 
         int totalCount = await query.CountAsync(cancellationToken);

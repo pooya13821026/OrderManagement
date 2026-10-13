@@ -22,17 +22,19 @@ public interface IProductRepository : IRepository<Product, Guid>
     Task<bool> ExistsBySkuAsync(string sku, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// صفحه‌ای از محصولات را برمی‌گرداند، به‌صورت اختیاری با فیلتر جست‌وجوی متنی آزاد (نام یا SKU)
-    /// و فیلتر پرچم فعال بودن.
+    /// صفحه‌ای از محصولات را برمی‌گرداند، به‌صورت اختیاری با فیلتر جست‌وجوی متنی آزاد (نام یا SKU)،
+    /// فیلتر پرچم فعال بودن و فیلتر دسته‌بندی.
     /// </summary>
     /// <param name="searchTerm">عبارت جست‌وجوی اختیاری؛ <c>null</c> یا خالی فیلتر متنی را رد می‌کند.</param>
     /// <param name="isActive">فیلتر اختیاری پرچم فعال بودن؛ <c>null</c> هم محصولات فعال و هم غیرفعال را برمی‌گرداند.</param>
+    /// <param name="categoryId">فیلتر اختیاری شناسه‌ی دسته‌بندی؛ <c>null</c> محصولات همه‌ی دسته‌ها (شامل بدون دسته) را برمی‌گرداند.</param>
     /// <param name="pageNumber">شماره‌ی صفحه که از ۱ شروع می‌شود.</param>
     /// <param name="pageSize">تعداد اقلام در هر صفحه.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<PagedEntities<Product>> GetPagedAsync(
         string? searchTerm,
         bool? isActive,
+        Guid? categoryId,
         int pageNumber,
         int pageSize,
         CancellationToken cancellationToken = default);

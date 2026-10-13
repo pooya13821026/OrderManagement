@@ -15,6 +15,7 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly OrderManagementDbContext _context;
     private readonly ICustomerRepository _customers;
+    private readonly ICategoryRepository _categories;
     private readonly IProductRepository _products;
     private readonly IOrderRepository _orders;
     private readonly IOrderItemRepository _orderItems;
@@ -28,6 +29,7 @@ public class UnitOfWork : IUnitOfWork
     /// </summary>
     /// <param name="context">کانتکست دیتابیس مشترک scope جاری.</param>
     /// <param name="customers">repository مشتریان.</param>
+    /// <param name="categories">repository دسته‌بندی‌ها.</param>
     /// <param name="products">repository محصولات.</param>
     /// <param name="orders">repository سفارش‌ها.</param>
     /// <param name="orderItems">repository ردیف‌های سفارش.</param>
@@ -37,6 +39,7 @@ public class UnitOfWork : IUnitOfWork
     public UnitOfWork(
         OrderManagementDbContext context,
         ICustomerRepository customers,
+        ICategoryRepository categories,
         IProductRepository products,
         IOrderRepository orders,
         IOrderItemRepository orderItems,
@@ -45,6 +48,7 @@ public class UnitOfWork : IUnitOfWork
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _customers = customers ?? throw new ArgumentNullException(nameof(customers));
+        _categories = categories ?? throw new ArgumentNullException(nameof(categories));
         _products = products ?? throw new ArgumentNullException(nameof(products));
         _orders = orders ?? throw new ArgumentNullException(nameof(orders));
         _orderItems = orderItems ?? throw new ArgumentNullException(nameof(orderItems));
@@ -54,6 +58,9 @@ public class UnitOfWork : IUnitOfWork
 
     /// <inheritdoc />
     public ICustomerRepository Customers => _customers;
+
+    /// <inheritdoc />
+    public ICategoryRepository Categories => _categories;
 
     /// <inheritdoc />
     public IProductRepository Products => _products;
