@@ -1,0 +1,706 @@
+{
+  "info": {
+    "name": "Order Management API",
+    "description": "راهنمای استفاده از مجموعه درخواست‌های Order Management:\n\n۱) کل سیستم را از ریشه‌ی مخزن با دستور `docker compose up --build` بالا بیاورید؛ API روی http://localhost:8080 در دسترس است (Swagger: http://localhost:8080/swagger) و دیتابیس/migration/seed به‌صورت خودکار آماده می‌شود.\n۲) فایل postman/OrderManagement.postman_environment.json را import و به‌عنوان environment فعال انتخاب کنید (متغیرهای baseUrl، accessToken، refreshToken، customerId، productId، orderId).\n۳) پیش‌فرض baseUrl برابر http://localhost:8080 (دکر) است؛ اگر API را با `dotnet run` لوکال اجرا می‌کنید، baseUrl را در environment به آدرس launchSettings (مثلاً http://localhost:5007) تغییر دهید.\n۴) ترتیب پیشنهادی اجرا: Auth/Login (کاربر مدیر) → Customers/Create → Products/Create → Orders/Create؛ سایر درخواست‌ها از متغیرهایی که این اسکریپت‌ها به‌صورت خودکار ذخیره می‌کنند استفاده می‌کنند.\n۵) اسکریپت‌های Login و Refresh توکن‌های accessToken و refreshToken را ذخیره می‌کنند؛ تقریباً همه‌ی درخواست‌ها با Bearer از {{accessToken}} استفاده می‌کنند و بدون ورود، 401 برمی‌گردانند.\n\nکاربران پیش‌فرض seed شده:\n- admin@ordermanagement.com / Admin@123 (نقش Admin)\n- user@ordermanagement.com / User@123 (نقش User)\n\nدرخواست‌هایی که در نامشان [Admin] دارید فقط با توکن مدیر اجرا شوند؛ برای تست 403 می‌توانید با کاربر User وارد شوید.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "customerId", "value": "", "type": "string" },
+    { "key": "productId", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "نقطه‌پایان‌های احراز هویت: ثبت‌نام، ورود، refresh، revoke و پروفایل کاربر. قبل از همه‌ی درخواست‌های دیگر، Login را اجرا کنید تا توکن‌ها ذخیره شوند.",
+      "item": [
+        {
+          "name": "Register - ثبت‌نام کاربر جدید",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"Eval@12345\",\n  \"firstName\": \"کاربر\",\n  \"lastName\": \"نمونه\",\n  \"phoneNumber\": \"+989121234567\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "ثبت‌نام کاربر جدید با نقش پیش‌فرض User (پاسخ 201). ایمیل تکراری 409 برمی‌گرداند؛ برای اجرای مجدد این درخواست ایمیل را تغییر دهید. گذرواژه باید حداقل ۸ کاراکتر باشد."
+          }
+        },
+        {
+          "name": "Login - ورود به سیستم",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@ordermanagement.com\",\n  \"password\": \"Admin@123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "ورود با کاربر پیش‌فرض مدیر (پاسخ 200). اسکریپت تست پس از موفقیت، accessToken و refreshToken را در collection و environment ذخیره می‌کند. برای درخواست‌های [Admin] باید با همین کاربر مدیر وارد شوید؛ برای تست دسترسی غیرمدیر از user@ordermanagement.com / User@123 استفاده کنید."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// ذخیره‌ی توکن‌های تازه؛ environment در صورت انتخاب بر collection اولویت دارد،",
+                  "// به همین دلیل هر دو scope به‌روز می‌شوند.",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set(\"accessToken\", data.accessToken);",
+                  "    pm.collectionVariables.set(\"refreshToken\", data.refreshToken);",
+                  "    try {",
+                  "        pm.environment.set(\"accessToken\", data.accessToken);",
+                  "        pm.environment.set(\"refreshToken\", data.refreshToken);",
+                  "    } catch (e) {",
+                  "        // environment انتخاب نشده است؛ توکن‌ها در collection variables معتبرند",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh - تمدید توکن",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "تعویض (چرخش) توکن refresh با یک زوج تازه (پاسخ 200). بعد از اجرا، توکن refresh قبلی باطل می‌شود و اسکریپت تست، توکن‌های جدید را در collection و environment ذخیره می‌کند. بدون Login اولیه این درخواست 400 برمی‌گرداند."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// چرخش موفق refresh: توکن‌های جدید در هر دو scope ذخیره می‌شوند.",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set(\"accessToken\", data.accessToken);",
+                  "    pm.collectionVariables.set(\"refreshToken\", data.refreshToken);",
+                  "    try {",
+                  "        pm.environment.set(\"accessToken\", data.accessToken);",
+                  "        pm.environment.set(\"refreshToken\", data.refreshToken);",
+                  "    } catch (e) {",
+                  "        // environment انتخاب نشده است؛ توکن‌ها در collection variables معتبرند",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke - لغو توکن refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/revoke",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "revoke"]
+            },
+            "description": "لغو توکن refresh (پاسخ 204)؛ نیازمند accessToken معتبر است. بعد از revoke دیگر نمی‌توان با همان توکن refresh جدید گرفت؛ برای ادامه‌ی کار دوباره Login بزنید. توکن refresh ناموجود 404 و بدون توکن دسترسی 401 برمی‌گرداند."
+          }
+        },
+        {
+          "name": "Me - پروفایل کاربر جاری",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            },
+            "description": "دریافت پروفایل کاربری که توکن جاری نماینده‌ی آن است (200). بدون توکن یا با توکن نامعتبر 401 برمی‌گرداند."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "description": "چرخه‌ی حیات سفارش‌ها: ایجاد، فهرست صفحه‌بندی‌شده/فیلترشده، بازیابی، تغییر وضعیت، حذف [Admin] و ایجاد گروهی [Admin]. قبل از اجرا، customerId و productId را از پوشه‌های Customers و Products بسازید (به‌صورت خودکار ذخیره می‌شوند).",
+      "item": [
+        {
+          "name": "Create Order - ایجاد سفارش",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"{{customerId}}\",\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 2\n    },\n    {\n      \"productId\": \"{{productId}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"shippingAddress\": \"تهران، خیابان ولیعصر، پلاک ۱۰\",\n  \"notes\": \"سفارش نمونه از Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"]
+            },
+            "description": "ایجاد سفارش با ۲ ردیف (پاسخ 201). از متغیرهای {{customerId}} و {{productId}} استفاده می‌کند؛ ابتدا Customers/Create و Products/Create را اجرا کنید تا این متغیرها پر شوند. شناسه‌ی سفارش ایجادشده در orderId ذخیره می‌شود. مشتری/محصول ناموجود 404 و موجودی ناکافی 409 است."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// شناسه‌ی سفارش ایجادشده برای GetById/ChangeStatus/Delete ذخیره می‌شود.",
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set(\"orderId\", data.id);",
+                  "    try { pm.environment.set(\"orderId\", data.id); } catch (e) { /* environment انتخاب نشده */ }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Orders - فهرست صفحه‌بندی و فیلتر",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders?pageNumber=1&pageSize=10&sortBy=OrderDate&sortDescending=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders"],
+              "query": [
+                { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
+                { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
+                { "key": "sortBy", "value": "OrderDate", "description": "ستون مرتب‌سازی: OrderDate | OrderNumber | TotalAmount | Status (نامعتبر = مرتب‌سازی پیش‌فرض تاریخ)" },
+                { "key": "sortDescending", "value": "true", "description": "نزولی اگر true" },
+                { "key": "customerId", "value": "{{customerId}}", "disabled": true, "description": "فیلتر مشتری؛ برای استفاده enable کنید" },
+                { "key": "status", "value": "1", "disabled": true, "description": "فیلتر وضعیت: 1=Pending تا 5=Cancelled؛ برای استفاده enable کنید" },
+                { "key": "fromDate", "value": "2026-01-01", "disabled": true, "description": "حداقل تاریخ سفارش (UTC)؛ برای استفاده enable کنید" },
+                { "key": "toDate", "value": "2026-12-31", "disabled": true, "description": "حداکثر تاریخ سفارش (UTC)؛ برای استفاده enable کنید" },
+                { "key": "searchTerm", "value": "ORD", "disabled": true, "description": "جست‌وجو در شماره سفارش/نام مشتری/ایمیل/مبلغ؛ برای استفاده enable کنید" }
+              ]
+            },
+            "description": "فهرست صفحه‌بندی‌شده‌ی سفارش‌ها (پاسخ 200) با پارامترهای pageNumber، pageSize، sortBy، sortDescending. فیلترهای customerId، status (۱ تا ۵)، fromDate، toDate و searchTerm به‌صورت پیش‌فرض غیرفعال‌اند؛ برای استفاده کافی است در Postman آن‌ها را enable کنید."
+          }
+        },
+        {
+          "name": "Get Order By Id - دریافت سفارش",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "{{orderId}}"]
+            },
+            "description": "دریافت یک سفارش به‌همراه مشتری و ردیف‌ها (200). بعد از Create Order متغیر orderId به‌صورت خودکار پر می‌شود؛ در غیر این صورت آن را دستی مقداردهی کنید. سفارش ناموجود 404 برمی‌گرداند."
+          }
+        },
+        {
+          "name": "Change Order Status - تغییر وضعیت سفارش",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newStatus\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "{{orderId}}", "status"]
+            },
+            "description": "تغییر وضعیت سفارش (پاسخ 200). newStatus: 1=Pending، 2=Confirmed، 3=Shipped، 4=Delivered، 5=Cancelled. گذارها فقط رو به جلو هستند (مثلاً Pending→Confirmed؛ Delivered/Cancelled وضعیت نهایی‌اند)؛ گذار غیرمجاز 400 و لغو (Cancelled) فقط با نقش Admin (در غیر این صورت 403). تأیید بیش از موجودی 409 برمی‌گرداند."
+          }
+        },
+        {
+          "name": "Delete Order - حذف سفارش [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "{{orderId}}"]
+            },
+            "description": "حذف سفارش (پاسخ 204)؛ فقط مدیر. با کاربر عادی 403 و بدون توکن 401 برمی‌گرداند. سفارش ناموجود 404 است."
+          }
+        },
+        {
+          "name": "Bulk Create Orders - ایجاد گروهی سفارش‌ها [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orders\": [\n    {\n      \"customerId\": \"{{customerId}}\",\n      \"items\": [\n        {\n          \"productId\": \"{{productId}}\",\n          \"quantity\": 1\n        }\n      ],\n      \"notes\": \"سفارش گروهی ۱\"\n    },\n    {\n      \"customerId\": \"{{customerId}}\",\n      \"items\": [\n        {\n          \"productId\": \"{{productId}}\",\n          \"quantity\": 3\n        }\n      ],\n      \"notes\": \"سفارش گروهی ۲\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "bulk"]
+            },
+            "description": "ایجاد گروهی ۲ سفارش در یک فراخوانی (پاسخ 200)؛ فقط مدیر (در غیر این صورت 403). لیست orders باید ۱ تا ۵۰۰ عضو داشته باشد. پاسخ شامل تعداد موفق/ناموفق و نتیجه‌ی تفکیکی هر سفارش (OrderId، OrderNumber یا ErrorMessage) است؛ خطای اعتبارسنجی کل payload هم 400 برمی‌گرداند."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "description": "مدیریت مشتریان: خواندن (GET) برای هر کاربر احرازهویت‌شده؛ ایجاد/ویرایش/حذف فقط با نقش Admin.",
+      "item": [
+        {
+          "name": "Create Customer - ایجاد مشتری [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"سارا\",\n  \"lastName\": \"احمدی\",\n  \"email\": \"sara.ahmadi@example.com\",\n  \"phone\": \"+989121112233\",\n  \"address\": \"تهران، سعادت‌آباد\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers"]
+            },
+            "description": "ایجاد مشتری جدید (پاسخ 201)؛ فقط مدیر (در غیر این صورت 403). ایمیل تکراری 409 برمی‌گرداند (در اجرای مجدد ایمیل را تغییر دهید). شناسه‌ی مشتری در متغیر customerId ذخیره می‌شود که سایر درخواست‌ها (مانند Create Order) از آن استفاده می‌کنند."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// شناسه‌ی مشتری ایجادشده برای سایر درخواست‌ها ذخیره می‌شود.",
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set(\"customerId\", data.id);",
+                  "    try { pm.environment.set(\"customerId\", data.id); } catch (e) { /* environment انتخاب نشده */ }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Customers - فهرست مشتریان",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customers?pageNumber=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers"],
+              "query": [
+                { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
+                { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
+                { "key": "searchTerm", "value": "احمدی", "disabled": true, "description": "جست‌وجو در نام و ایمیل؛ برای استفاده enable کنید" }
+              ]
+            },
+            "description": "فهرست صفحه‌بندی‌شده‌ی مشتریان (پاسخ 200). پارامترهای pageNumber و pageSize و همچنین جست‌وجوی اختیاری searchTerm (نام/ایمیل)؛ برای فعال‌سازی جست‌وجو کافی است پارامتر را enable کنید."
+          }
+        },
+        {
+          "name": "Get Customer By Id - دریافت مشتری",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "{{customerId}}"]
+            },
+            "description": "دریافت یک مشتری با شناسه (پاسخ 200). مشتری ناموجود 404 برمی‌گرداند؛ متغیر customerId را از Create Customer یا فهرست بردارید."
+          }
+        },
+        {
+          "name": "Update Customer - ویرایش مشتری [Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"سارا\",\n  \"lastName\": \"احمدی\",\n  \"email\": \"sara.ahmadi@example.com\",\n  \"phone\": \"+989121112244\",\n  \"address\": \"تهران، ولیعصر\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "{{customerId}}"]
+            },
+            "description": "ویرایش کامل مشتری (پاسخ 200)؛ فقط مدیر. فیلدهای firstName، lastName و email الزامی‌اند (به‌روزرسانی جزئی ممکن نیست). مشتری ناموجود 404 و ایمیل تکراری (متعلق به مشتری دیگر) 409 برمی‌گرداند."
+          }
+        },
+        {
+          "name": "Delete Customer - حذف مشتری [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "customers", "{{customerId}}"]
+            },
+            "description": "حذف مشتری (پاسخ 204)؛ فقط مدیر. مشتری‌ای که سفارش دارد به‌خاطر محدودیت کلید خارجی قابل حذف نیست (پاسخ خطای سرور)؛ برای مشاهده‌ی موفقیت، مشتری بدون سفارش (مثلاً همین مشتریِ تازه ایجادشده پیش از ساخت سفارش) را حذف کنید. مشتری ناموجود 404 است."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "description": "کاتالوگ محصول: خواندن (GET) برای هر کاربر احرازهویت‌شده؛ ایجاد/ویرایش/حذف/اصلاح موجودی فقط با نقش Admin. موجودی از مسیر PATCH stock تغییر می‌کند، نه از PUT.",
+      "item": [
+        {
+          "name": "Create Product - ایجاد محصول [Admin]",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"کیبورد مکانیکی\",\n  \"description\": \"محصول نمونه از Postman\",\n  \"price\": 1250000,\n  \"stockQuantity\": 100,\n  \"sku\": \"PM-KB-001\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"]
+            },
+            "description": "ایجاد محصول جدید (پاسخ 201)؛ فقط مدیر. SKU تکراری 409 برمی‌گرداند (در اجرای مجدد مقدار sku را تغییر دهید) و قیمت صفر/منفی 400. شناسه‌ی محصول در متغیر productId ذخیره می‌شود."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// شناسه‌ی محصول ایجادشده برای سایر درخواست‌ها ذخیره می‌شود.",
+                  "if (pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.collectionVariables.set(\"productId\", data.id);",
+                  "    try { pm.environment.set(\"productId\", data.id); } catch (e) { /* environment انتخاب نشده */ }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Products - فهرست محصولات",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products?pageNumber=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products"],
+              "query": [
+                { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
+                { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
+                { "key": "searchTerm", "value": "PM", "disabled": true, "description": "جست‌وجو در نام/توضیحات/SKU محصول؛ برای استفاده enable کنید" },
+                { "key": "isActive", "value": "true", "disabled": true, "description": "فیلتر فعال/غیرفعال؛ خالی = همه؛ برای استفاده enable کنید" }
+              ]
+            },
+            "description": "فهرست صفحه‌بندی‌شده‌ی محصولات (پاسخ 200). پارامترهای pageNumber و pageSize و فیلترهای اختیاری searchTerm و isActive؛ برای فعال‌سازی فیلترها کافی است پارامتر مربوطه را enable کنید."
+          }
+        },
+        {
+          "name": "Get Product By Id - دریافت محصول",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "دریافت یک محصول با شناسه (پاسخ 200). محصول ناموجود 404 برمی‌گرداند؛ متغیر productId را از Create Product یا فهرست بردارید."
+          }
+        },
+        {
+          "name": "Update Product - ویرایش محصول [Admin]",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"کیبورد مکانیکی حرفه‌ای\",\n  \"description\": \"محصول نمونه ویرایش‌شده از Postman\",\n  \"price\": 1350000,\n  \"sku\": \"PM-KB-001\",\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "ویرایش کامل محصول (پاسخ 200)؛ فقط مدیر. فیلدهای name، price و sku الزامی‌اند؛ موجودی را از این مسیر تغییر ندهید (موجودی با PATCH stock اصلاح می‌شود). SKU تکراری 409 و محصول ناموجود 404 برمی‌گرداند."
+          }
+        },
+        {
+          "name": "Adjust Stock - اصلاح موجودی محصول [Admin]",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantityChange\": 10\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}/stock",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}", "stock"]
+            },
+            "description": "اصلاح موجودی محصول (پاسخ 200)؛ فقط مدیر. quantityChange مثبت = شارژ موجودی، منفی = برداشت. مقدار صفر 400 و برداشت بیش از موجودی فعلی 409 برمی‌گرداند؛ محصول ناموجود 404 است."
+          }
+        },
+        {
+          "name": "Delete Product - حذف محصول [Admin]",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "products", "{{productId}}"]
+            },
+            "description": "حذف محصول (پاسخ 204)؛ فقط مدیر. محصولی که در سفارشی استفاده شده به‌خاطر محدودیت کلید خارجی قابل حذف نیست (پاسخ خطای سرور)؛ برای مشاهده‌ی موفقیت، محصول بدون سفارش (مثلاً همین محصول تازه ایجادشده پیش از ساخت سفارش) را حذف کنید. محصول ناموجود 404 است."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+# ============================================================================
+# اجرای کل سیستم با یک دستور:  docker compose up --build
+#   - API:         http://localhost:8080   (Swagger: http://localhost:8080/swagger)
+#   - SQL Server:  localhost:1433
+# پس از بالا آمدن API، migration های EF به‌صورت خودکار اعمال و داده‌های seed
+# (کاربران، ۵۰ مشتری، ۲۰۰ محصول) درج می‌شوند.
+#
+# نکته‌ی امنیتی: رمز عبور sa و کلید JWT این فایل مقادیر پیش‌فرض «فقط توسعه»
+# هستند و عمداً با Api/appsettings.json یکسان‌اند. در محیط production حتماً
+# باید این مقادیر را از طریق متغیرهای محیطی متفاوت (یا secret manager)
+# مقداردهی کنید و هرگز مقادیر پیش‌فرض را به production منتقل نکنید.
+# ============================================================================
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      # رمز پیش‌فرض فقط برای توسعه/ارزیابی است؛ در production با env متفاوت جایگزین شود.
+      MSSQL_SA_PASSWORD: "Order@12345"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      # sqlcmd نسخه‌ی 18 با پرچم -C (اعتماد به گواهی self-signed داخل کانتینر)
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Order@12345' -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  api:
+    build:
+      # context ریشه‌ی مخزن است تا پروژه‌های وابسته (Application/Infrastructure/Domain)
+      # نیز در دسترس build قرار گیرند؛ فایل Dockerfile در مسیر Api/ است.
+      context: .
+      dockerfile: Api/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      # اتصال به سرویس sqlserver داخل شبکه‌ی compose (مسیر اتصال پیش‌فرض برنامه)
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=OrderManagementDb;User Id=sa;Password=Order@12345;TrustServerCertificate=True"
+      # کلید توسعه‌ی JWT (همان مقدار Api/appsettings.json)؛ در production باید با env متفاوت جایگزین شود.
+      Jwt__Key: "OrderManagement-Dev-Jwt-Signing-Key-ChangeMe-2026!"
+
+volumes:
+  sqldata:
