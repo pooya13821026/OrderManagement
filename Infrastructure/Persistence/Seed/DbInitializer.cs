@@ -60,8 +60,9 @@ public static class DbInitializer
 
         int createdUsers = await SeedUsersAsync(context, cancellationToken);
         int createdCustomers = await SeedCustomersAsync(context, cancellationToken);
-        int createdCategories = await SeedCategoriesAsync(context, cancellationToken);
-        int createdProducts = await SeedProductsAsync(context, cancellationToken);
+        (int createdCategories, Dictionary<string, Guid> categoryIdsByName) =
+            await SeedCategoriesAsync(context, cancellationToken);
+        int createdProducts = await SeedProductsAsync(context, categoryIdsByName, cancellationToken);
 
         // یک ذخیره‌ی واحد کل داده‌کاشت را اتمیک نگه می‌دارد: یا همه‌ی ردیف‌ها می‌نشینند یا هیچ‌کدام.
         await context.SaveChangesAsync(cancellationToken);
@@ -108,8 +109,8 @@ public static class DbInitializer
                 UserName = "admin",
                 Email = AdminEmail,
                 PasswordHash = passwordHasher.Hash(AdminPassword),
-                FirstName = "Admin",
-                LastName = "Admin",
+                FirstName = "مدیر",
+                LastName = "سیستم",
                 IsActive = true,
                 Role = Roles.Admin,
                 SecurityStamp = Guid.NewGuid().ToString("N")
@@ -125,8 +126,8 @@ public static class DbInitializer
                 UserName = "user",
                 Email = UserEmail,
                 PasswordHash = passwordHasher.Hash(UserPassword),
-                FirstName = "Demo",
-                LastName = "User",
+                FirstName = "کاربر",
+                LastName = "نمایشی",
                 IsActive = true,
                 Role = Roles.User,
                 SecurityStamp = Guid.NewGuid().ToString("N")
@@ -138,9 +139,9 @@ public static class DbInitializer
     }
 
     /// <summary>
-    /// جدول مشتریان را با یک توالی قطعی Bogus (seed 12345) تا
-    /// <see cref="CustomerSeedCount"/> ردیف کامل می‌کند. ایمیل‌ها شماره‌ی ردیف را در خود
-    /// دارند، بنابراین حتی وقتی داده‌کاشت ناقص توسط اجرای بعدی کامل شود یکتا می‌مانند.
+    /// جدول مشتریان را با داده‌ی فارسی (نام و نام‌خانوادگی ایرانی، موبایل ایرانی و آدرس
+    /// فارسی) تا <see cref="CustomerSeedCount"/> ردیف کامل می‌کند. ایمیل‌ها لاتین و یکتا
+    /// می‌مانند چون ایمیل فارسی در دنیای واقعی هم کاربردی ندارد. توالی قطعی است (seed 12345).
     /// </summary>
     /// <param name="context">کانتکست دیتابیس.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
@@ -154,12 +155,19 @@ public static class DbInitializer
             return 0;
         }
 
-        var customerFaker = new Faker<Customer>("en")
+        // نام‌ها از دیتاست فارسی Bogus؛ تلفن و آدرس با الگوی ایرانی ساخته می‌شوند تا
+        // مستقل از کامل بودن دیتاست لوکیال، همیشه شکل واقعی داشته باشند.
+        string[] cities = ["تهران", "اصفهان", "شیراز", "مشهد", "تبریز", "کرج", "اهواز", "قم"];
+        string[] streets = ["ولیعصر", "انقلاب", "آزادی", "شریعتی", "مطهری", "فردوسی", "حافظ", "سعدی"];
+
+        var customerFaker = new Faker<Customer>("fa")
             .UseSeed(BogusSeed)
             .RuleFor(customer => customer.FirstName, faker => faker.Name.FirstName())
             .RuleFor(customer => customer.LastName, faker => faker.Name.LastName())
-            .RuleFor(customer => customer.Phone, faker => faker.Phone.PhoneNumber())
-            .RuleFor(customer => customer.Address, faker => faker.Address.FullAddress());
+            .RuleFor(customer => customer.Phone, faker =>
+                $"09{faker.Random.Int(10, 99):D2} {faker.Random.Int(100, 999):D3} {faker.Random.Int(1000, 9999):D4}")
+            .RuleFor(customer => customer.Address, faker =>
+                $"{faker.PickRandom(cities)}، خیابان {faker.PickRandom(streets)}، پلاک {faker.Random.Int(1, 200)}، واحد {faker.Random.Int(1, 30)}");
 
         for (int index = existingCount; index < CustomerSeedCount; index++)
         {
@@ -167,8 +175,8 @@ public static class DbInitializer
 
             Customer customer = customerFaker.Generate();
             customer.Id = Guid.NewGuid();
-            // شماره‌ی ردیف، آدرس‌های تولیدشده را در میان همه‌ی اجراها یکتا نگه می‌دارد.
-            customer.Email = BuildEmail(customer.FirstName, customer.LastName, index + 1);
+            // شماره‌ی ردیف، ایمیل‌ها را در میان همه‌ی اجراها یکتا نگه می‌دارد.
+            customer.Email = $"customer.{index + 1:D3}@example.com";
             context.Customers.Add(customer);
         }
 
@@ -183,8 +191,11 @@ public static class DbInitializer
     /// </summary>
     /// <param name="context">کانتکست دیتابیس.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
-    /// <returns>تعداد دسته‌هایی که ایجاد شدند.</returns>
-    private static async Task<int> SeedCategoriesAsync(OrderManagementDbContext context, CancellationToken cancellationToken)
+    /// <returns>تعداد دسته‌های ایجادشده به‌همراه نگاشت نام به شناسه‌ی همه‌ی دسته‌ها
+    /// (شامل موجودهای قبلی)، تا محصولات تازه‌سید به دسته‌ی مرتبطشان متصل شوند.</returns>
+    private static async Task<(int Created, Dictionary<string, Guid> IdsByName)> SeedCategoriesAsync(
+        OrderManagementDbContext context,
+        CancellationToken cancellationToken)
     {
         string[] categoryNames =
         [
@@ -198,38 +209,51 @@ public static class DbInitializer
             "اسباب‌بازی"
         ];
 
+        // دسته‌های موجود در دیتابیس هم در نگاشت می‌آیند تا در اجراهای تکمیلی
+        // (دیتابیس نیمه‌کاشت‌شده) محصولات جدید هم دسته‌ی درست بگیرند.
+        Dictionary<string, Guid> idsByName = await context.Categories
+            .ToDictionaryAsync(category => category.Name, category => category.Id, cancellationToken);
+
         int created = 0;
         foreach (string name in categoryNames)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (await context.Categories.AnyAsync(category => category.Name == name, cancellationToken))
+            if (idsByName.ContainsKey(name))
             {
                 continue;
             }
 
+            var categoryId = Guid.NewGuid();
             context.Categories.Add(new Category
             {
-                Id = Guid.NewGuid(),
+                Id = categoryId,
                 Name = name,
                 Description = $"دسته‌بندی {name} کاتالوگ.",
                 IsActive = true
             });
+            idsByName[name] = categoryId;
             created++;
         }
 
-        return created;
+        return (created, idsByName);
     }
 
     /// <summary>
-    /// جدول محصولات را با یک توالی قطعی Bogus (seed 12345) تا
-    /// <see cref="ProductSeedCount"/> ردیف کامل می‌کند. SKU ها از قالب یکتای
-    /// <c>SKU-0001</c> پیروی می‌کنند و هر دهمین محصول (دقیقاً ۱۰٪) غیرفعال است.
+    /// جدول محصولات را با نام‌های فارسی (متناسب با دسته‌بندی‌ها) تا
+    /// <see cref="ProductSeedCount"/> ردیف کامل می‌کند. هر محصول به دسته‌ی مرتبطش متصل
+    /// می‌شود تا فیلتر دسته‌بندی از همان ابتدا داده‌ی نمایشی داشته باشد. SKU ها از قالب
+    /// یکتای <c>SKU-0001</c> پیروی می‌کنند و هر دهمین محصول (دقیقاً ۱۰٪) غیرفعال است.
+    /// توالی قطعی است (seed 12345).
     /// </summary>
     /// <param name="context">کانتکست دیتابیس.</param>
+    /// <param name="categoryIdsByName">نگاشت نام دسته به شناسه (خروجی داده‌کاشت دسته‌ها).</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <returns>تعداد محصولاتی که ایجاد شدند.</returns>
-    private static async Task<int> SeedProductsAsync(OrderManagementDbContext context, CancellationToken cancellationToken)
+    private static async Task<int> SeedProductsAsync(
+        OrderManagementDbContext context,
+        Dictionary<string, Guid> categoryIdsByName,
+        CancellationToken cancellationToken)
     {
         int existingCount = await context.Products.CountAsync(cancellationToken);
         int missingCount = ProductSeedCount - existingCount;
@@ -238,61 +262,70 @@ public static class DbInitializer
             return 0;
         }
 
-        var productFaker = new Faker<Product>("en")
-            .UseSeed(BogusSeed)
-            .RuleFor(product => product.Name, faker => faker.Commerce.ProductName())
-            .RuleFor(product => product.Description, faker => faker.Commerce.ProductDescription())
-            .RuleFor(product => product.Price, faker => Math.Round(faker.Random.Decimal(1m, 1000m), 2))
-            .RuleFor(product => product.StockQuantity, faker => faker.Random.Int(0, 500));
+        (string Name, string Category)[] catalog =
+        [
+            ("گوشی موبایل", "کالای دیجیتال"),
+            ("لپ‌تاپ", "کالای دیجیتال"),
+            ("هدفون بی‌سیم", "کالای دیجیتال"),
+            ("ساعت هوشمند", "کالای دیجیتال"),
+            ("کیبورد مکانیکی", "کالای دیجیتال"),
+            ("ماوس گیمینگ", "کالای دیجیتال"),
+            ("مانیتور", "کالای دیجیتال"),
+            ("تبلت", "کالای دیجیتال"),
+            ("اسپیکر بلوتوثی", "کالای دیجیتال"),
+            ("پاوربانک", "کالای دیجیتال"),
+            ("تیشرت نخی", "پوشاک"),
+            ("شلوار جین", "پوشاک"),
+            ("کفش ورزشی", "پوشاک"),
+            ("کاپشن زمستانی", "پوشاک"),
+            ("مانتو", "پوشاک"),
+            ("کیف چرمی", "پوشاک"),
+            ("کتاب رمان", "کتاب"),
+            ("کتاب آشپزی", "کتاب"),
+            ("دفتر یادداشت", "کتاب"),
+            ("مبل راحتی", "لوازم‌خانگی"),
+            ("چراغ مطالعه", "لوازم‌خانگی"),
+            ("قابلمه", "لوازم‌خانگی"),
+            ("سرویس چای‌خوری", "لوازم‌خانگی"),
+            ("دمبل", "ورزشی"),
+            ("توپ فوتبال", "ورزشی"),
+            ("قمقمه ورزشی", "ورزشی"),
+            ("کرم مرطوب‌کننده", "زیبایی و بهداشت"),
+            ("شامپو", "زیبایی و بهداشت"),
+            ("عسل طبیعی", "خوراکی"),
+            ("چای ایرانی", "خوراکی"),
+            ("لگوی ساختنی", "اسباب‌بازی"),
+            ("عروسک", "اسباب‌بازی"),
+        ];
+
+        var productFaker = new Faker("fa") { Random = new Randomizer(BogusSeed) };
 
         for (int index = existingCount; index < ProductSeedCount; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            Product product = productFaker.Generate();
-            product.Id = Guid.NewGuid();
+            (string baseName, string categoryName) = catalog[index % catalog.Length];
+            // وقتی نام‌های پایه تمام شوند، مدل شماره‌دار اضافه می‌شود تا نام‌ها تکراریِ محض نباشند.
+            int modelNumber = index / catalog.Length + 1;
+            string name = modelNumber == 1 ? baseName : $"{baseName} مدل {modelNumber}";
+
             int rowNumber = index + 1;
-            product.Sku = $"SKU-{rowNumber:D4}";
-            // سهم قطعی ۱۰٪ غیرفعال: هر دهمین محصول بازنشسته می‌شود.
-            product.IsActive = rowNumber % 10 != 0;
-            context.Products.Add(product);
+            context.Products.Add(new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                Description = $"{name} با کیفیت بالا و ضمانت اصالت کالا.",
+                Price = Math.Round(productFaker.Random.Decimal(1m, 1000m), 2),
+                StockQuantity = productFaker.Random.Int(0, 500),
+                Sku = $"SKU-{rowNumber:D4}",
+                // سهم قطعی ۱۰٪ غیرفعال: هر دهمین محصول بازنشسته می‌شود.
+                IsActive = rowNumber % 10 != 0,
+                CategoryId = categoryIdsByName.TryGetValue(categoryName, out Guid categoryId)
+                    ? categoryId
+                    : null,
+            });
         }
 
         return missingCount;
-    }
-
-    /// <summary>
-    /// یک آدرس نمونه‌ی یکتا و امن برای صندوق ایمیل از روی یک نام و شماره‌ی ردیف می‌سازد،
-    /// برای نمونه <c>john.smith.001@example.com</c>.
-    /// </summary>
-    /// <param name="firstName">نام.</param>
-    /// <param name="lastName">نام خانوادگی.</param>
-    /// <param name="rowNumber">شماره‌ی ردیف که از ۱ شروع می‌شود.</param>
-    /// <returns>آدرس ایمیل تولیدشده.</returns>
-    private static string BuildEmail(string firstName, string lastName, int rowNumber)
-    {
-        string localPart = SanitizeEmailPart($"{firstName}.{lastName}");
-        return $"{localPart}.{rowNumber:D3}@example.com";
-    }
-
-    /// <summary>
-    /// مقدار را به حروف کوچک تبدیل می‌کند و فقط حروف، ارقام و نقطه‌های ASCII را نگه می‌دارد،
-    /// بنابراین نام‌های تولیدشده (برای نمونه <c>O'Brien</c>) هرگز نمی‌توانند آدرس نامعتبر
-    /// بسازند.
-    /// </summary>
-    /// <param name="value">مقدار خام.</param>
-    /// <returns>مقدار پاک‌سازی‌شده، یا <c>customer</c> وقتی چیز قابل استفاده‌ای باقی نمانده باشد.</returns>
-    private static string SanitizeEmailPart(string value)
-    {
-        string lowered = value.ToLowerInvariant();
-        char[] cleaned = lowered
-            .Where(character =>
-                character is >= 'a' and <= 'z'
-                or >= '0' and <= '9'
-                or '.')
-            .ToArray();
-
-        string result = new(cleaned);
-        return string.IsNullOrEmpty(result) ? "customer" : result;
     }
 }
