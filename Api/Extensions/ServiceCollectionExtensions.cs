@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using OrderManagement.Api.Serialization;
 using OrderManagement.Application.Interfaces;
 using OrderManagement.Application.Services;
 using Serilog;
@@ -31,7 +32,12 @@ public static class ServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                // همه‌ی تاریخ‌های خروجی فقط تا دقت دقیقه نمایش داده می‌شوند (بدون ثانیه).
+                options.JsonSerializerOptions.Converters.Add(new MinutePrecisionDateTimeConverter());
+            });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {

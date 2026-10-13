@@ -20,9 +20,11 @@ try
 
     // منابع پیکربندی: appsettings.json به‌علاوه‌ی لایه‌ی مخصوص محیط
     // (appsettings.{Environment}.json) و متغیرهای محیطی، با همین ترتیب اولویت.
+    // اول ContentRoot و اگر آنجا نبود پوشه‌ی DLL جست‌وجو می‌شود تا اجرا از هر پوشه‌ای
+    // کار کند (`dotnet run`، `dotnet Api.dll` از ریشه‌ی مخزن، یا داخل کانتینر).
     builder.Configuration
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+        .AddJsonFile(ResolveConfigPath(builder, "appsettings.json"), optional: false, reloadOnChange: true)
+        .AddJsonFile(ResolveConfigPath(builder, $"appsettings.{builder.Environment.EnvironmentName}.json"), optional: true, reloadOnChange: true)
         .AddEnvironmentVariables();
 
     // پایداری، repository ها، هش‌کننده‌ی رمز عبور و سرویس توکن JWT (Infrastructure).
@@ -60,7 +62,13 @@ try
     // مستندات API (از deliverable های تسک) در همه‌ی محیط‌ها فعال است تا ارزیاب با هر
     // حالتی که اجرا کند Swagger را ببیند؛ در محصول واقعی بهتر است فقط Development باشد.
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        // توکن واردشده در دکمه Authorize داخل حافظه‌ی مرورگر می‌ماند؛ با بستن و باز کردن
+        // دوباره‌ی Swagger لازم نیست دوباره وارد شود. انقضا سمت سرور کنترل می‌شود، پس
+        // توکن تاریخ‌گذشته خودکار 401 می‌گیرد.
+        options.ConfigObject.AdditionalItems["persistAuthorization"] = true;
+    });
 
     // ترتیب مهم است: middleware مربوط به JWT bearer درخواست را احراز هویت می‌کند و
     // ClaimsPrincipal (شامل claim نگاشته‌شده‌ی نقش) را پیش از اجرای authorization می‌سازد.
@@ -91,6 +99,19 @@ catch (Exception exception)
 finally
 {
     Log.CloseAndFlush();
+}
+
+// فایل تنظیمات را اول در ContentRoot و اگر آنجا نبود در پوشه‌ی DLL پیدا می‌کند،
+// تا برنامه مستقل از پوشه‌ی اجرای دستور بالا بیاید.
+static string ResolveConfigPath(WebApplicationBuilder builder, string fileName)
+{
+    string fromContentRoot = Path.Combine(builder.Environment.ContentRootPath, fileName);
+    if (File.Exists(fromContentRoot))
+    {
+        return fromContentRoot;
+    }
+
+    return Path.Combine(AppContext.BaseDirectory, fileName);
 }
 
 // یک DI scope می‌سازد، migration های معلق دیتابیس را اعمال و seeder idempotent را اجرا می‌کند.
