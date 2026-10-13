@@ -17,7 +17,7 @@ namespace OrderManagement.Api.Controllers;
 /// نیاز دارد. لغو توکن و نقطه‌پایان پروفایل به یک توکن دسترسی معتبر نیاز دارند.
 /// </remarks>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]/[action]")]
 [Authorize]
 [Produces("application/json")]
 public class AuthController : ControllerBase

@@ -18,7 +18,7 @@ namespace OrderManagement.Api.Controllers;
 /// که گذار <c>Cancelled</c> مخصوص مدیر را اعمال می‌کند.
 /// </remarks>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]/[action]")]
 [Authorize]
 [Produces("application/json")]
 public class OrdersController : ControllerBase

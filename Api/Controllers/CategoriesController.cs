@@ -15,7 +15,7 @@ namespace OrderManagement.Api.Controllers;
 /// یک الزام نقش اضافی فقط به مدیران محدود شده است.
 /// </remarks>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]/[action]")]
 [Authorize]
 [Produces("application/json")]
 public class CategoriesController : ControllerBase

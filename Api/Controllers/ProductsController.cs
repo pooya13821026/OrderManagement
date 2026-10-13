@@ -15,7 +15,7 @@ namespace OrderManagement.Api.Controllers;
 /// نیازمندی نقش اضافه فقط برای مدیران مجاز است.
 /// </remarks>
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]/[action]")]
 [Authorize]
 [Produces("application/json")]
 public class ProductsController : ControllerBase
