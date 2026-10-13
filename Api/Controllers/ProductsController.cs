@@ -145,7 +145,7 @@ public class ProductsController : ControllerBase
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">محصولی با این شناسه وجود ندارد.</response>
     /// <response code="409">موجودی برای برداشت درخواستی کافی نیست.</response>
-    [HttpPatch("{id:guid}/stock")]
+    [HttpPatch("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]

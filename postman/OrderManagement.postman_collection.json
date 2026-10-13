@@ -41,9 +41,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/register",
+              "raw": "{{baseUrl}}/api/Auth/Register",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "path": ["api", "Auth", "Register"]
             },
             "description": "ثبت‌نام کاربر جدید با نقش پیش‌فرض User (پاسخ 201). ایمیل تکراری 409 برمی‌گرداند؛ برای اجرای مجدد این درخواست ایمیل را تغییر دهید. گذرواژه باید حداقل ۸ کاراکتر باشد."
           }
@@ -71,9 +71,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/login",
+              "raw": "{{baseUrl}}/api/Auth/Login",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "path": ["api", "Auth", "Login"]
             },
             "description": "ورود با کاربر پیش‌فرض مدیر (پاسخ 200). اسکریپت تست پس از موفقیت، accessToken و refreshToken را در collection و environment ذخیره می‌کند. برای درخواست‌های [Admin] باید با همین کاربر مدیر وارد شوید؛ برای تست دسترسی غیرمدیر از user@ordermanagement.com / User@123 استفاده کنید."
           },
@@ -124,9 +124,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/refresh",
+              "raw": "{{baseUrl}}/api/Auth/Refresh",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "refresh"]
+              "path": ["api", "Auth", "Refresh"]
             },
             "description": "تعویض (چرخش) توکن refresh با یک زوج تازه (پاسخ 200). بعد از اجرا، توکن refresh قبلی باطل می‌شود و اسکریپت تست، توکن‌های جدید را در collection و environment ذخیره می‌کند. بدون Login اولیه این درخواست 400 برمی‌گرداند."
           },
@@ -176,9 +176,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/revoke",
+              "raw": "{{baseUrl}}/api/Auth/Revoke",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "revoke"]
+              "path": ["api", "Auth", "Revoke"]
             },
             "description": "لغو توکن refresh (پاسخ 204)؛ نیازمند accessToken معتبر است. بعد از revoke دیگر نمی‌توان با همان توکن refresh جدید گرفت؛ برای ادامه‌ی کار دوباره Login بزنید. توکن refresh ناموجود 404 و بدون توکن دسترسی 401 برمی‌گرداند."
           }
@@ -195,9 +195,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/me",
+              "raw": "{{baseUrl}}/api/Auth/Me",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "me"]
+              "path": ["api", "Auth", "Me"]
             },
             "description": "دریافت پروفایل کاربری که توکن جاری نماینده‌ی آن است (200). بدون توکن یا با توکن نامعتبر 401 برمی‌گرداند."
           }
@@ -231,9 +231,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/orders",
+              "raw": "{{baseUrl}}/api/Orders/Create",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "orders"]
+              "path": ["api", "Orders", "Create"]
             },
             "description": "ایجاد سفارش با ۲ ردیف (پاسخ 201). از متغیرهای {{customerId}} و {{productId}} استفاده می‌کند؛ ابتدا Customers/Create و Products/Create را اجرا کنید تا این متغیرها پر شوند. شناسه‌ی سفارش ایجادشده در orderId ذخیره می‌شود. مشتری/محصول ناموجود 404 و موجودی ناکافی 409 است."
           },
@@ -266,9 +266,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/orders?pageNumber=1&pageSize=10&sortBy=OrderDate&sortDescending=true",
+              "raw": "{{baseUrl}}/api/Orders/GetPaged?pageNumber=1&pageSize=10&sortBy=OrderDate&sortDescending=true",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "orders"],
+              "path": ["api", "Orders", "GetPaged"],
               "query": [
                 { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
                 { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
@@ -296,9 +296,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "raw": "{{baseUrl}}/api/Orders/GetById/{{orderId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "orders", "{{orderId}}"]
+              "path": ["api", "Orders", "GetById", "{{orderId}}"]
             },
             "description": "دریافت یک سفارش به‌همراه مشتری و ردیف‌ها (200). بعد از Create Order متغیر orderId به‌صورت خودکار پر می‌شود؛ در غیر این صورت آن را دستی مقداردهی کنید. سفارش ناموجود 404 برمی‌گرداند."
           }
@@ -326,9 +326,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/orders/{{orderId}}/status",
+              "raw": "{{baseUrl}}/api/Orders/UpdateStatus/{{orderId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "orders", "{{orderId}}", "status"]
+              "path": ["api", "Orders", "UpdateStatus", "{{orderId}}"]
             },
             "description": "تغییر وضعیت سفارش (پاسخ 200). newStatus: 1=Pending، 2=Confirmed، 3=Shipped، 4=Delivered، 5=Cancelled. گذارها فقط رو به جلو هستند (مثلاً Pending→Confirmed؛ Delivered/Cancelled وضعیت نهایی‌اند)؛ گذار غیرمجاز 400 و لغو (Cancelled) فقط با نقش Admin (در غیر این صورت 403). تأیید بیش از موجودی 409 برمی‌گرداند."
           }
@@ -345,9 +345,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/orders/{{orderId}}",
+              "raw": "{{baseUrl}}/api/Orders/Delete/{{orderId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "orders", "{{orderId}}"]
+              "path": ["api", "Orders", "Delete", "{{orderId}}"]
             },
             "description": "حذف سفارش (پاسخ 204)؛ فقط مدیر. با کاربر عادی 403 و بدون توکن 401 برمی‌گرداند. سفارش ناموجود 404 است."
           }
@@ -375,9 +375,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/orders/bulk",
+              "raw": "{{baseUrl}}/api/Orders/BulkCreate",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "orders", "bulk"]
+              "path": ["api", "Orders", "BulkCreate"]
             },
             "description": "ایجاد گروهی ۲ سفارش در یک فراخوانی (پاسخ 200)؛ فقط مدیر (در غیر این صورت 403). لیست orders باید ۱ تا ۵۰۰ عضو داشته باشد. پاسخ شامل تعداد موفق/ناموفق و نتیجه‌ی تفکیکی هر سفارش (OrderId، OrderNumber یا ErrorMessage) است؛ خطای اعتبارسنجی کل payload هم 400 برمی‌گرداند."
           }
@@ -411,9 +411,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/customers",
+              "raw": "{{baseUrl}}/api/Customers/Create",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "customers"]
+              "path": ["api", "Customers", "Create"]
             },
             "description": "ایجاد مشتری جدید (پاسخ 201)؛ فقط مدیر (در غیر این صورت 403). ایمیل تکراری 409 برمی‌گرداند (در اجرای مجدد ایمیل را تغییر دهید). شناسه‌ی مشتری در متغیر customerId ذخیره می‌شود که سایر درخواست‌ها (مانند Create Order) از آن استفاده می‌کنند."
           },
@@ -446,9 +446,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/customers?pageNumber=1&pageSize=10",
+              "raw": "{{baseUrl}}/api/Customers/GetPaged?pageNumber=1&pageSize=10",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "customers"],
+              "path": ["api", "Customers", "GetPaged"],
               "query": [
                 { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
                 { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
@@ -470,9 +470,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "raw": "{{baseUrl}}/api/Customers/GetById/{{customerId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "customers", "{{customerId}}"]
+              "path": ["api", "Customers", "GetById", "{{customerId}}"]
             },
             "description": "دریافت یک مشتری با شناسه (پاسخ 200). مشتری ناموجود 404 برمی‌گرداند؛ متغیر customerId را از Create Customer یا فهرست بردارید."
           }
@@ -500,9 +500,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "raw": "{{baseUrl}}/api/Customers/Update/{{customerId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "customers", "{{customerId}}"]
+              "path": ["api", "Customers", "Update", "{{customerId}}"]
             },
             "description": "ویرایش کامل مشتری (پاسخ 200)؛ فقط مدیر. فیلدهای firstName، lastName و email الزامی‌اند (به‌روزرسانی جزئی ممکن نیست). مشتری ناموجود 404 و ایمیل تکراری (متعلق به مشتری دیگر) 409 برمی‌گرداند."
           }
@@ -519,9 +519,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/customers/{{customerId}}",
+              "raw": "{{baseUrl}}/api/Customers/Delete/{{customerId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "customers", "{{customerId}}"]
+              "path": ["api", "Customers", "Delete", "{{customerId}}"]
             },
             "description": "حذف مشتری (پاسخ 204)؛ فقط مدیر. مشتری‌ای که سفارش دارد به‌خاطر محدودیت کلید خارجی قابل حذف نیست (پاسخ خطای سرور)؛ برای مشاهده‌ی موفقیت، مشتری بدون سفارش (مثلاً همین مشتریِ تازه ایجادشده پیش از ساخت سفارش) را حذف کنید. مشتری ناموجود 404 است."
           }
@@ -555,9 +555,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/categories",
+              "raw": "{{baseUrl}}/api/Categories/Create",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "categories"]
+              "path": ["api", "Categories", "Create"]
             },
             "description": "ایجاد دسته جدید (پاسخ 201)؛ فقط مدیر. نام تکراری 409 برمی‌گرداند (در اجرای مجدد نام را تغییر دهید). شناسه‌ی دسته در متغیر categoryId ذخیره می‌شود."
           },
@@ -590,9 +590,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/categories?pageNumber=1&pageSize=10",
+              "raw": "{{baseUrl}}/api/Categories/GetPaged?pageNumber=1&pageSize=10",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "categories"],
+              "path": ["api", "Categories", "GetPaged"],
               "query": [
                 { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
                 { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
@@ -615,9 +615,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "raw": "{{baseUrl}}/api/Categories/GetById/{{categoryId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "categories", "{{categoryId}}"]
+              "path": ["api", "Categories", "GetById", "{{categoryId}}"]
             },
             "description": "دریافت یک دسته با شناسه (پاسخ 200). دسته ناموجود 404 برمی‌گرداند؛ متغیر categoryId را از Create Category یا فهرست بردارید."
           }
@@ -645,9 +645,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "raw": "{{baseUrl}}/api/Categories/Update/{{categoryId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "categories", "{{categoryId}}"]
+              "path": ["api", "Categories", "Update", "{{categoryId}}"]
             },
             "description": "ویرایش کامل دسته (پاسخ 200)؛ فقط مدیر. فیلد name الزامی است. دسته ناموجود 404 و نام تکراری (متعلق به دسته دیگر) 409 برمی‌گرداند."
           }
@@ -664,9 +664,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/categories/{{categoryId}}",
+              "raw": "{{baseUrl}}/api/Categories/Delete/{{categoryId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "categories", "{{categoryId}}"]
+              "path": ["api", "Categories", "Delete", "{{categoryId}}"]
             },
             "description": "حذف دسته (پاسخ 204)؛ فقط مدیر. دسته‌ای که محصولی به آن متصل است به‌خاطر محدودیت کلید خارجی قابل حذف نیست (پاسخ خطای سرور)؛ برای مشاهده‌ی موفقیت، دسته بدون محصول (مثلاً همین دسته‌ی تازه ایجادشده) را حذف کنید. دسته ناموجود 404 است."
           }
@@ -700,9 +700,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/products",
+              "raw": "{{baseUrl}}/api/Products/Create",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "products"]
+              "path": ["api", "Products", "Create"]
             },
             "description": "ایجاد محصول جدید (پاسخ 201)؛ فقط مدیر. SKU تکراری 409 برمی‌گرداند (در اجرای مجدد مقدار sku را تغییر دهید) و قیمت صفر/منفی 400. شناسه‌ی محصول در متغیر productId ذخیره می‌شود."
           },
@@ -735,9 +735,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/products?pageNumber=1&pageSize=10",
+              "raw": "{{baseUrl}}/api/Products/GetPaged?pageNumber=1&pageSize=10",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "products"],
+              "path": ["api", "Products", "GetPaged"],
               "query": [
                 { "key": "pageNumber", "value": "1", "description": "شماره‌ی صفحه (از ۱)" },
                 { "key": "pageSize", "value": "10", "description": "اندازه‌ی صفحه؛ حداکثر ۱۰۰" },
@@ -761,9 +761,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "raw": "{{baseUrl}}/api/Products/GetById/{{productId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "products", "{{productId}}"]
+              "path": ["api", "Products", "GetById", "{{productId}}"]
             },
             "description": "دریافت یک محصول با شناسه (پاسخ 200). محصول ناموجود 404 برمی‌گرداند؛ متغیر productId را از Create Product یا فهرست بردارید."
           }
@@ -791,9 +791,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "raw": "{{baseUrl}}/api/Products/Update/{{productId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "products", "{{productId}}"]
+              "path": ["api", "Products", "Update", "{{productId}}"]
             },
             "description": "ویرایش کامل محصول (پاسخ 200)؛ فقط مدیر. فیلدهای name، price و sku الزامی‌اند؛ موجودی را از این مسیر تغییر ندهید (موجودی با PATCH stock اصلاح می‌شود). SKU تکراری 409 و محصول ناموجود 404 برمی‌گرداند."
           }
@@ -821,9 +821,9 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/products/{{productId}}/stock",
+              "raw": "{{baseUrl}}/api/Products/AdjustStock/{{productId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "products", "{{productId}}", "stock"]
+              "path": ["api", "Products", "AdjustStock", "{{productId}}"]
             },
             "description": "اصلاح موجودی محصول (پاسخ 200)؛ فقط مدیر. quantityChange مثبت = شارژ موجودی، منفی = برداشت. مقدار صفر 400 و برداشت بیش از موجودی فعلی 409 برمی‌گرداند؛ محصول ناموجود 404 است."
           }
@@ -840,9 +840,9 @@
               ]
             },
             "url": {
-              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "raw": "{{baseUrl}}/api/Products/Delete/{{productId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "products", "{{productId}}"]
+              "path": ["api", "Products", "Delete", "{{productId}}"]
             },
             "description": "حذف محصول (پاسخ 204)؛ فقط مدیر. محصولی که در سفارشی استفاده شده به‌خاطر محدودیت کلید خارجی قابل حذف نیست (پاسخ خطای سرور)؛ برای مشاهده‌ی موفقیت، محصول بدون سفارش (مثلاً همین محصول تازه ایجادشده پیش از ساخت سفارش) را حذف کنید. محصول ناموجود 404 است."
           }

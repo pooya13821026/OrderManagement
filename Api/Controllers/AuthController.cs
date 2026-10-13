@@ -44,7 +44,7 @@ public class AuthController : ControllerBase
     /// <response code="201">حساب ایجاد شد.</response>
     /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
     /// <response code="409">آدرس ایمیل قبلاً ثبت شده است.</response>
-    [HttpPost("register")]
+    [HttpPost]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status201Created)]
@@ -55,7 +55,7 @@ public class AuthController : ControllerBase
         CancellationToken cancellationToken)
     {
         AuthResponse response = await _authService.RegisterAsync(request, cancellationToken);
-        return CreatedAtAction(nameof(GetCurrentUser), response);
+        return CreatedAtAction(nameof(Me), response);
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ public class AuthController : ControllerBase
     /// <response code="200">اعتبارنامه‌ها پذیرفته شدند.</response>
     /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
     /// <response code="403">رمز عبور اشتباه است یا حساب غیرفعال شده است.</response>
-    [HttpPost("login")]
+    [HttpPost]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
@@ -89,7 +89,7 @@ public class AuthController : ControllerBase
     /// <returns>توکن‌های جدید و پروفایل کاربر.</returns>
     /// <response code="200">توکن چرخانده شد.</response>
     /// <response code="400">payload اعتبارسنجی را رد کرد یا توکن دیگر قابل استفاده نیست.</response>
-    [HttpPost("refresh")]
+    [HttpPost]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
@@ -113,7 +113,7 @@ public class AuthController : ControllerBase
     /// <response code="400">payload اعتبارسنجی را رد کرد.</response>
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
     /// <response code="404">هیچ توکن refresh ذخیره‌شده‌ای منطبق با مقدار ارائه‌شده نیست.</response>
-    [HttpPost("revoke")]
+    [HttpPost]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -133,12 +133,12 @@ public class AuthController : ControllerBase
     /// <response code="200">پروفایل برگردانده شد.</response>
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
     /// <response code="404">حساب پشت توکن دیگر وجود ندارد.</response>
-    [HttpGet("me")]
+    [HttpGet]
     [Authorize]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> GetCurrentUser(CancellationToken cancellationToken)
+    public async Task<ActionResult<UserDto>> Me(CancellationToken cancellationToken)
     {
         // claim مربوط به "sub" در JWT به‌صورت ClaimTypes.NameIdentifier نگاشت می‌شود
         // (نگاشت claim های ورودی که با middleware مربوط به bearer پیکربندی شده است).

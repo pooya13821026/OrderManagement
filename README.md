@@ -52,7 +52,7 @@ Domain (مرکز، بدون وابستگی)
 - توکن refresh فقط به‌صورت هش SHA256 ذخیره و هنگام استفاده چرخش (rotation) می‌شود.
   ارائه‌ی توکن باطل‌شده کل زنجیره‌ی کاربر را باطل می‌کند (reuse detection).
 - اندپوینت‌های ناشناس احراز هویت (register/login/refresh) محدودیت نرخ دارند (۲۰ درخواست در دقیقه برای هر IP).
-- موجودی فقط از دو مسیر عوض می‌شود: Confirm سفارش (کاهش) و `PATCH /api/products/{id}/stock` مخصوص Admin.
+- موجودی فقط از دو مسیر عوض می‌شود: Confirm سفارش (کاهش) و `PATCH /api/Products/AdjustStock/{id}` مخصوص Admin.
 - Swagger در همه محیط‌ها فعال است تا ارزیابی مستندات راحت باشد
   (در محصول واقعی بهتر است فقط Development باشد).
 - کلید JWT داخل `appsettings.json` فقط برای توسعه/ارزیابی است؛ در استقرار واقعی از
@@ -113,33 +113,35 @@ dotnet test OrderManagement.slnx
 
 ```powershell
 # ورود و گرفتن accessToken و refreshToken
-$login = Invoke-RestMethod -Method Post http://localhost:8080/api/auth/login `
+$login = Invoke-RestMethod -Method Post http://localhost:8080/api/Auth/Login `
   -ContentType "application/json" `
   -Body '{"email":"admin@ordermanagement.com","password":"Admin@123"}'
 $tok = $login.accessToken
 
 # استفاده در ادامه (مثال: لیست سفارش‌ها)
-Invoke-RestMethod http://localhost:8080/api/orders -Headers @{ Authorization = "Bearer $tok" }
+Invoke-RestMethod http://localhost:8080/api/Orders/GetPaged -Headers @{ Authorization = "Bearer $tok" }
 ```
 
 یا در Swagger دکمه **Authorize** و وارد کردن توکن؛ یا کالکشن Postman
 (`postman/OrderManagement.postman_collection.json` + فایل environment) که لاگین/refresh
-توکن‌ها را خودش ذخیره می‌کند. ثبت‌نام هم از `POST /api/auth/register` ممکن است
+توکن‌ها را خودش ذخیره می‌کند. ثبت‌نام هم از `POST /api/Auth/Register` ممکن است
 (نقش پیش‌فرض `User`).
 
 ## اندپوینت‌ها (خلاصه)
 
+قرارداد مسیرها اکشن‌محور است: `api/{کنترلر}/{اکشن}` (مثلاً `api/Orders/Create`).
+
 | متد | مسیر | دسترسی |
 |---|---|---|
-| POST | `/api/auth/register` ،`/login` ،`/refresh` | آزاد |
-| POST | `/api/auth/revoke` — GET `/api/auth/me` | احرازشده |
-| POST `/api/orders` — GET `/api/orders` (فیلتر+پیج) — GET `/api/orders/{id}` | احرازشده |
-| PATCH `/api/orders/{id}/status` (`{newStatus}`) | احرازشده (لغو فقط Admin) |
-| DELETE `/api/orders/{id}` — POST `/api/orders/bulk` | Admin |
-| GET `/api/customers` ،`/{id}` — POST/PUT/DELETE | خواندن احرازشده، نوشتن Admin |
-| GET `/api/categories` ،`/{id}` — POST/PUT/DELETE | خواندن احرازشده، نوشتن Admin |
-| GET `/api/products` ،`/{id}` — POST/PUT/DELETE | خواندن احرازشده، نوشتن Admin |
-| PATCH `/api/products/{id}/stock` (`{quantityChange}`) | Admin |
+| POST | `/api/Auth/Register` ،`/Login` ،`/Refresh` | آزاد |
+| POST | `/api/Auth/Revoke` — GET `/api/Auth/Me` | احرازشده |
+| POST `/api/Orders/Create` — GET `/api/Orders/GetPaged` (فیلتر+پیج) — GET `/api/Orders/GetById/{id}` | احرازشده |
+| PATCH `/api/Orders/UpdateStatus/{id}` (`{newStatus}`) | احرازشده (لغو فقط Admin) |
+| DELETE `/api/Orders/Delete/{id}` — POST `/api/Orders/BulkCreate` | Admin |
+| GET `/api/Customers/GetPaged` ،`/GetById/{id}` — POST `/Create` — PUT `/Update/{id}` — DELETE `/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
+| GET `/api/Categories/GetPaged` ،`/GetById/{id}` — POST `/Create` — PUT `/Update/{id}` — DELETE `/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
+| GET `/api/Products/GetPaged` ،`/GetById/{id}` — POST `/Create` — PUT `/Update/{id}` — DELETE `/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
+| PATCH `/api/Products/AdjustStock/{id}` (`{quantityChange}`) | Admin |
 
 ## ساختار مخزن
 
