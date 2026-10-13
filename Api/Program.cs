@@ -1,3 +1,5 @@
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using OrderManagement.Api.Extensions;
 using OrderManagement.Api.Middleware;
@@ -27,6 +29,19 @@ try
     builder.Services.AddInfrastructure(builder.Configuration);
     // MVC، Swagger، احراز هویت bearer مربوط به JWT، مجوزدهی و Serilog (Api).
     builder.Services.AddApiServices(builder.Configuration);
+    // محدودسازی نرخ روی اندپوینت‌های ناشناس احراز هویت (ضد brute-force روی لاگین/ثبت‌نام).
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.AddPolicy("auth", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    });
     // سرویس‌های برنامه که کنترلرها از آن‌ها استفاده می‌کنند.
     builder.Services.AddApplicationServices();
 
@@ -38,6 +53,9 @@ try
 
     // لاگ‌گیری ساخت‌یافته‌ی درخواست‌ها (متد، مسیر، کد وضعیت، زمان سپری‌شده) از طریق Serilog.
     app.UseSerilogRequestLogging();
+
+    // باید پیش از احراز هویت اجرا شود تا سیل درخواست‌های ناشناس زودتر مهار شود.
+    app.UseRateLimiter();
 
     // مستندات API (از deliverable های تسک) در همه‌ی محیط‌ها فعال است تا ارزیاب با هر
     // حالتی که اجرا کند Swagger را ببیند؛ در محصول واقعی بهتر است فقط Development باشد.

@@ -118,6 +118,10 @@ public class AuthService : IAuthService
 
         if (storedToken.RevokedAt is not null)
         {
+            // تشخیص استفاده‌ی مجدد (reuse detection): ارائه‌ی توکن باطل‌شده یعنی احتمالاً توکن
+            // لو رفته و مهاجم زنجیره را جلو برده است؛ پس کل زنجیره‌ی کاربر باطل می‌شود تا
+            // توکن جایگزین دست مهاجم هم بی‌اعتبار شود، بعد خطا پرتاب می‌شود.
+            await _unitOfWork.RefreshTokens.RevokeAllUserTokensAsync(storedToken.UserId, cancellationToken);
             throw new UnauthorizedOperationException("توکن refresh باطل شده است.");
         }
 
