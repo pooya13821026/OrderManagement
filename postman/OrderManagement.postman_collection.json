@@ -306,7 +306,7 @@
         {
           "name": "Change Order Status - تغییر وضعیت سفارش",
           "request": {
-            "method": "PATCH",
+            "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
@@ -336,7 +336,7 @@
         {
           "name": "Delete Order - حذف سفارش [Admin]",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
             "header": [],
             "auth": {
               "type": "bearer",
@@ -480,7 +480,7 @@
         {
           "name": "Update Customer - ویرایش مشتری [Admin]",
           "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
@@ -510,7 +510,7 @@
         {
           "name": "Delete Customer - حذف مشتری [Admin]",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
             "header": [],
             "auth": {
               "type": "bearer",
@@ -625,7 +625,7 @@
         {
           "name": "Update Category - ویرایش دسته [Admin]",
           "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
@@ -655,7 +655,7 @@
         {
           "name": "Delete Category - حذف دسته [Admin]",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
             "header": [],
             "auth": {
               "type": "bearer",
@@ -675,7 +675,7 @@
     },
     {
       "name": "Products",
-      "description": "کاتالوگ محصول: خواندن (GET) برای هر کاربر احرازهویت‌شده؛ ایجاد/ویرایش/حذف/اصلاح موجودی فقط با نقش Admin. موجودی از مسیر PATCH stock تغییر می‌کند، نه از PUT.",
+      "description": "کاتالوگ محصول: خواندن (GET) برای هر کاربر احرازهویت‌شده؛ ایجاد/ویرایش/حذف/اصلاح موجودی فقط با نقش Admin. موجودی از مسیر POST stock تغییر می‌کند.",
       "item": [
         {
           "name": "Create Product - ایجاد محصول [Admin]",
@@ -771,7 +771,7 @@
         {
           "name": "Update Product - ویرایش محصول [Admin]",
           "request": {
-            "method": "PUT",
+            "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
@@ -795,13 +795,13 @@
               "host": ["{{baseUrl}}"],
               "path": ["api", "Products", "Update", "{{productId}}"]
             },
-            "description": "ویرایش کامل محصول (پاسخ 200)؛ فقط مدیر. فیلدهای name، price و sku الزامی‌اند؛ موجودی را از این مسیر تغییر ندهید (موجودی با PATCH stock اصلاح می‌شود). SKU تکراری 409 و محصول ناموجود 404 برمی‌گرداند."
+            "description": "ویرایش کامل محصول (پاسخ 200)؛ فقط مدیر. فیلدهای name، price و sku الزامی‌اند؛ موجودی را از این مسیر تغییر ندهید (موجودی با POST stock اصلاح می‌شود). SKU تکراری 409 و محصول ناموجود 404 برمی‌گرداند."
           }
         },
         {
           "name": "Adjust Stock - اصلاح موجودی محصول [Admin]",
           "request": {
-            "method": "PATCH",
+            "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" }
             ],
@@ -831,7 +831,7 @@
         {
           "name": "Delete Product - حذف محصول [Admin]",
           "request": {
-            "method": "DELETE",
+            "method": "POST",
             "header": [],
             "auth": {
               "type": "bearer",

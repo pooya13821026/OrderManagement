@@ -120,7 +120,7 @@ public class OrdersController : ControllerBase
     /// <response code="403">یک غیرمدیر سعی کرد سفارش را لغو کند.</response>
     /// <response code="404">سفارشی با این شناسه وجود ندارد.</response>
     /// <response code="409">تأیید سفارش از موجودی در دسترس فراتر می‌رود.</response>
-    [HttpPatch("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -165,7 +165,7 @@ public class OrdersController : ControllerBase
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">سفارشی با این شناسه وجود ندارد.</response>
-    [HttpDelete("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

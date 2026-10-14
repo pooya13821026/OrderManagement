@@ -11,7 +11,7 @@ namespace OrderManagement.Api.Controllers;
 /// نقطه‌پایان‌های مدیریت مشتریان: ایجاد، جست‌وجوی صفحه‌بندی‌شده، بازیابی، به‌روزرسانی و حذف.
 /// </summary>
 /// <remarks>
-/// خواندن برای هر کاربر احرازهویت‌شده باز است؛ عملیات نوشتن (POST، PUT، DELETE) از طریق
+/// خواندن برای هر کاربر احرازهویت‌شده باز است؛ عملیات نوشتن (POST) از طریق
 /// یک الزام نقش اضافی فقط به مدیران محدود شده است.
 /// </remarks>
 [ApiController]
@@ -117,7 +117,7 @@ public class CustomersController : ControllerBase
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">مشتری‌ای با این شناسه وجود ندارد.</response>
     /// <response code="409">آدرس ایمیل قبلاً اشغال شده است.</response>
-    [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -144,7 +144,7 @@ public class CustomersController : ControllerBase
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">مشتری‌ای با این شناسه وجود ندارد.</response>
-    [HttpDelete("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

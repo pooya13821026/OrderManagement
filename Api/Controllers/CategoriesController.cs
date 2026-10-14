@@ -11,7 +11,7 @@ namespace OrderManagement.Api.Controllers;
 /// نقطه‌پایان‌های مدیریت دسته‌بندی محصولات: ایجاد، جست‌وجوی صفحه‌بندی‌شده، بازیابی، به‌روزرسانی و حذف.
 /// </summary>
 /// <remarks>
-/// خواندن برای هر کاربر احرازهویت‌شده باز است؛ عملیات نوشتن (POST، PUT، DELETE) از طریق
+/// خواندن برای هر کاربر احرازهویت‌شده باز است؛ عملیات نوشتن (POST) از طریق
 /// یک الزام نقش اضافی فقط به مدیران محدود شده است.
 /// </remarks>
 [ApiController]
@@ -120,7 +120,7 @@ public class CategoriesController : ControllerBase
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">دسته‌ای با این شناسه وجود ندارد.</response>
     /// <response code="409">نام دسته قبلاً اشغال شده است.</response>
-    [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -147,7 +147,7 @@ public class CategoriesController : ControllerBase
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">دسته‌ای با این شناسه وجود ندارد.</response>
-    [HttpDelete("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

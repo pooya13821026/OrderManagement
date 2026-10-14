@@ -133,18 +133,19 @@ Invoke-RestMethod http://localhost:8080/api/Orders/GetPaged -Headers @{ Authoriz
 ## اندپوینت‌ها (خلاصه)
 
 قرارداد مسیرها اکشن‌محور است: `api/{کنترلر}/{اکشن}` (مثلاً `api/Orders/Create`).
+قرارداد متدها: خواندن‌ها `GET` و همه‌ی نوشتن‌ها `POST` (ویرایش، تغییر وضعیت، شارژ موجودی و حذف هم POST هستند).
 
 | متد | مسیر | دسترسی |
 |---|---|---|
 | POST | `/api/Auth/Register` ،`/Login` ،`/Refresh` | آزاد |
 | POST | `/api/Auth/Revoke` — GET `/api/Auth/Me` | احرازشده |
 | POST `/api/Orders/Create` — GET `/api/Orders/GetPaged` (فیلتر+پیج) — GET `/api/Orders/GetById/{id}` | احرازشده |
-| PATCH `/api/Orders/UpdateStatus/{id}` (`{newStatus}`) | احرازشده (لغو فقط Admin) |
-| DELETE `/api/Orders/Delete/{id}` — POST `/api/Orders/BulkCreate` | Admin |
-| GET `/api/Customers/GetPaged` ،`/GetById/{id}` — POST `/Create` — PUT `/Update/{id}` — DELETE `/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
-| GET `/api/Categories/GetPaged` ،`/GetById/{id}` — POST `/Create` — PUT `/Update/{id}` — DELETE `/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
-| GET `/api/Products/GetPaged` ،`/GetById/{id}` — POST `/Create` — PUT `/Update/{id}` — DELETE `/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
-| PATCH `/api/Products/AdjustStock/{id}` (`{quantityChange}`) | Admin |
+| POST `/api/Orders/UpdateStatus/{id}` (`{newStatus}`) | احرازشده (لغو فقط Admin) |
+| POST `/api/Orders/Delete/{id}` — POST `/api/Orders/BulkCreate` | Admin |
+| GET `/api/Customers/GetPaged` ،`/GetById/{id}` — POST `/Create` ،`/Update/{id}` ،`/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
+| GET `/api/Categories/GetPaged` ،`/GetById/{id}` — POST `/Create` ،`/Update/{id}` ،`/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
+| GET `/api/Products/GetPaged` ،`/GetById/{id}` — POST `/Create` ،`/Update/{id}` ،`/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
+| POST `/api/Products/AdjustStock/{id}` (`{quantityChange}`) | Admin |
 
 ## ساختار مخزن
 

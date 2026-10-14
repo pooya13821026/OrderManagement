@@ -11,7 +11,7 @@ namespace OrderManagement.Api.Controllers;
 /// اندپوینت‌های کاتالوگ محصول: ایجاد، جست‌وجوی صفحه‌بندی‌شده، دریافت تکی، ویرایش، حذف و اصلاح موجودی.
 /// </summary>
 /// <remarks>
-/// خواندن برای هر کاربر احراز هویت‌شده آزاد است؛ عملیات نوشتنی (POST، PUT، DELETE) با
+/// خواندن برای هر کاربر احراز هویت‌شده آزاد است؛ عملیات نوشتنی (POST) با
 /// نیازمندی نقش اضافه فقط برای مدیران مجاز است.
 /// </remarks>
 [ApiController]
@@ -114,7 +114,7 @@ public class ProductsController : ControllerBase
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">محصولی با این شناسه وجود ندارد.</response>
     /// <response code="409">کد کالا (SKU) قبلاً استفاده شده است.</response>
-    [HttpPut("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -145,7 +145,7 @@ public class ProductsController : ControllerBase
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">محصولی با این شناسه وجود ندارد.</response>
     /// <response code="409">موجودی برای برداشت درخواستی کافی نیست.</response>
-    [HttpPatch("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -171,7 +171,7 @@ public class ProductsController : ControllerBase
     /// <response code="401">توکن دسترسی معتبر ارائه نشده است.</response>
     /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">محصولی با این شناسه وجود ندارد.</response>
-    [HttpDelete("{id:guid}")]
+    [HttpPost("{id:guid}")]
     [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
