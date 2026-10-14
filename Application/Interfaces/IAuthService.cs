@@ -1,3 +1,4 @@
+using OrderManagement.Application.Common;
 using OrderManagement.Application.Dtos.Auth;
 
 namespace OrderManagement.Application.Interfaces;
@@ -55,4 +56,18 @@ public interface IAuthService
     /// <returns>پروفایل کاربر به‌صورت DTO.</returns>
     /// <exception cref="Domain.Exceptions.EntityNotFoundException">وقتی کاربر وجود نداشته باشد پرتاب می‌شود.</exception>
     Task<UserDto> GetCurrentUserAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// صفحه‌ای فیلترشده و صفحه‌بندی‌شده از کاربران را برای فهرست مدیریتی برمی‌گرداند و
+    /// برای هر کاربر شناسه‌ی پروفایل مشتری متصلش (<see cref="UserDto.CustomerId"/>) را resolve می‌کند.
+    /// الزام نقش در لایه‌ی API اعمال می‌شود؛ این سرویس فقط صفحه‌بندی می‌کند.
+    /// </summary>
+    /// <param name="parameters">پارامترهای صفحه‌بندی (شماره و اندازه‌ی صفحه).</param>
+    /// <param name="searchTerm">عبارت اختیاری جست‌وجو روی نام کاربری، ایمیل و نام کاربران.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>صفحه‌ای از DTOهای کاربر.</returns>
+    Task<PagedResult<UserDto>> GetPagedUsersAsync(
+        PaginationParams parameters,
+        string? searchTerm,
+        CancellationToken cancellationToken = default);
 }

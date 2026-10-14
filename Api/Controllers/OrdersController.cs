@@ -36,7 +36,9 @@ public class OrdersController : ControllerBase
     }
 
     /// <summary>
-    /// یک سفارش جدید با وضعیت <c>Pending</c> ایجاد می‌کند. برای هر کاربر احرازهویت‌شده باز است.
+    /// یک سفارش جدید با وضعیت <c>Pending</c> ایجاد می‌کند. کاربر عادی فقط برای
+    /// مشتریِ متصل به حساب خودش می‌تواند سفارش ثبت کند (در غیر این صورت ۴۰۳)؛ مدیر
+    /// برای هر مشتری معتبر.
     /// </summary>
     /// <param name="request">payload ایجاد سفارش.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
@@ -44,24 +46,32 @@ public class OrdersController : ControllerBase
     /// <response code="201">سفارش ایجاد شد.</response>
     /// <response code="400">payload اعتبارسنجی را رد کرد یا قاعده‌ی کسب‌وکار نقض شد.</response>
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">مشتریِ درخواستی متعلق به فراخواننده نیست.</response>
     /// <response code="404">مشتری یکی از محصولات وجود ندارد.</response>
     /// <response code="409">موجودی یکی از محصولات کافی نیست.</response>
     [HttpPost]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<OrderDto>> Create(
         [FromBody] CreateOrderRequest request,
         CancellationToken cancellationToken)
     {
-        OrderDto created = await _orderService.CreateAsync(request, cancellationToken);
+        OrderDto created = await _orderService.CreateAsync(
+            request,
+            ReadCallerUserId() ?? Guid.Empty,
+            ReadCallerRole(),
+            cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
     /// <summary>
     /// یک صفحه‌ی فیلترشده، مرتب‌شده و صفحه‌بندی‌شده از سفارش‌ها دریافت می‌کند.
+    /// کاربر عادی فقط سفارش‌های خودش را می‌بیند (فیلتر مشتری نادیده گرفته می‌شود)؛
+    /// مدیر همه‌ی سفارش‌ها را با فیلتر کامل می‌بیند.
     /// </summary>
     /// <param name="filter">
     /// پارامترهای پرس‌وجو: <c>customerId</c>، <c>status</c>، <c>fromDate</c>، <c>toDate</c>،
@@ -80,26 +90,33 @@ public class OrdersController : ControllerBase
         [FromQuery] OrderFilterParams filter,
         CancellationToken cancellationToken)
     {
-        PagedResult<OrderDto> page = await _orderService.GetPagedAsync(filter, cancellationToken);
+        PagedResult<OrderDto> page = await _orderService.GetPagedAsync(
+            filter,
+            ReadCallerUserId(),
+            ReadCallerRole(),
+            cancellationToken);
         return Ok(page);
     }
 
     /// <summary>
     /// یک سفارش را بر اساس شناسه، شامل مشتری و ردیف‌ها، دریافت می‌کند.
+    /// کاربر عادی فقط سفارش خودش را می‌بیند (در غیر این صورت ۴۰۳).
     /// </summary>
     /// <param name="id">شناسه‌ی سفارش.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <returns>سفارش درخواستی.</returns>
     /// <response code="200">سفارش برگردانده شد.</response>
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">سفارش متعلق به فراخواننده نیست.</response>
     /// <response code="404">سفارشی با این شناسه وجود ندارد.</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(OrderDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<OrderDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        OrderDto order = await _orderService.GetByIdAsync(id, cancellationToken);
+        OrderDto order = await _orderService.GetByIdAsync(id, ReadCallerUserId(), ReadCallerRole(), cancellationToken);
         return Ok(order);
     }
 
@@ -132,25 +149,13 @@ public class OrdersController : ControllerBase
         [FromBody] UpdateOrderStatusRequest request,
         CancellationToken cancellationToken)
     {
-        // claim مربوط به نقش: claim "role" در JWT توسط middleware مرتبط با bearer به
-        // ClaimTypes.Role نمایان می‌شود (RoleClaimType). سرویس آن را با Roles.Admin مقایسه
-        // می‌کند تا گذار Cancelled مخصوص مدیر را مجاز کند.
-        string requesterRole = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
-
-        // شناسه‌ی کاربر: claim sub در JWT توسط middleware به ClaimTypes.NameIdentifier
-        // نگاشته می‌شود؛ برای ثبت در تاریخچه‌ی وضعیت استفاده می‌شود و نامعتبر بودن آن
-        // مانع گذار نمی‌شود (فقط در تاریخچه null می‌ماند).
-        Guid? changedByUserId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId)
-            ? userId
-            : null;
-
         OrderDto updated = await _orderService.UpdateStatusAsync(
             id,
             request.NewStatus,
-            requesterRole,
+            ReadCallerRole(),
             cancellationToken,
             request.Reason,
-            changedByUserId);
+            ReadCallerUserId());
 
         return Ok(updated);
     }
@@ -200,5 +205,28 @@ public class OrdersController : ControllerBase
     {
         BulkCreateOrdersResponse response = await _orderService.BulkCreateAsync(request, cancellationToken);
         return Ok(response);
+    }
+
+    /// <summary>
+    /// نقش فراخواننده را از claim اعتبارسنجی‌شده‌ی توکن می‌خواند. claim "role" در JWT
+    /// توسط middleware حامل به ClaimTypes.Role نمایان می‌شود (RoleClaimType).
+    /// </summary>
+    /// <returns>نقش فراخواننده، یا رشته‌ی خالی وقتی claim ندارد.</returns>
+    private string ReadCallerRole()
+    {
+        return User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
+    }
+
+    /// <summary>
+    /// شناسه‌ی فراخواننده را از claim اعتبارسنجی‌شده‌ی توکن می‌خواند (claim sub در JWT
+    /// به ClaimTypes.NameIdentifier نگاشته می‌شود). برای مالکیت سفارش و ثبت تاریخچه
+    /// استفاده می‌شود؛ نامعتبر بودن آن فقط یعنی مالکیت اثبات‌نشده (<c>null</c>).
+    /// </summary>
+    /// <returns>شناسه‌ی فراخواننده یا <c>null</c>.</returns>
+    private Guid? ReadCallerUserId()
+    {
+        return Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId)
+            ? userId
+            : null;
     }
 }

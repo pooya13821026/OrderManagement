@@ -1,4 +1,5 @@
 using Moq;
+using OrderManagement.Application.Common;
 using OrderManagement.Application.Dtos.Auth;
 using OrderManagement.Application.Interfaces;
 using OrderManagement.Application.Services;
@@ -20,6 +21,7 @@ public class AuthServiceTests
 
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
     private readonly Mock<IUserRepository> _userRepository = new();
+    private readonly Mock<ICustomerRepository> _customerRepository = new();
     private readonly Mock<IRefreshTokenRepository> _refreshTokenRepository = new();
     private readonly Mock<ITokenService> _tokenService = new();
     private readonly Mock<IPasswordHasher> _passwordHasher = new();
@@ -31,6 +33,7 @@ public class AuthServiceTests
     public AuthServiceTests()
     {
         _unitOfWork.SetupGet(u => u.Users).Returns(_userRepository.Object);
+        _unitOfWork.SetupGet(u => u.Customers).Returns(_customerRepository.Object);
         _unitOfWork.SetupGet(u => u.RefreshTokens).Returns(_refreshTokenRepository.Object);
         _unitOfWork.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
@@ -245,6 +248,72 @@ public class AuthServiceTests
 
         _refreshTokenRepository.Verify(r => r.Update(It.IsAny<RefreshToken>()), Times.Never);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// ثبت‌نام باید هم‌زمان با حساب، پروفایل مشتریِ متصل به همان حساب بسازد و شناسه‌اش را در پاسخ برگرداند.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_CreatesLinkedCustomerProfile()
+    {
+        const string email = "linked@example.com";
+        const string password = "Password123!";
+        _userRepository.Setup(r => r.ExistsByEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _passwordHasher.Setup(h => h.Hash(password)).Returns("hashed");
+
+        Customer? addedCustomer = null;
+        _customerRepository
+            .Setup(r => r.AddAsync(It.IsAny<Customer>(), It.IsAny<CancellationToken>()))
+            .Callback<Customer, CancellationToken>((customer, _) => addedCustomer = customer)
+            .Returns(Task.CompletedTask);
+
+        AuthResponse response = await _service.RegisterAsync(new RegisterRequest
+        {
+            Email = email,
+            Password = password,
+            FirstName = "Sara",
+            LastName = "Ahmadi",
+            PhoneNumber = "09123456789"
+        });
+
+        Assert.NotNull(addedCustomer);
+        Assert.Equal(email, addedCustomer.Email);
+        Assert.Equal("Sara", addedCustomer.FirstName);
+        Assert.Equal("Ahmadi", addedCustomer.LastName);
+        Assert.Equal("09123456789", addedCustomer.Phone);
+        // اتصال دوسویه: پروفایل به حساب ثبت‌نامی لینک است و پاسخ همان را اعلام می‌کند.
+        Assert.Equal(response.User.Id, addedCustomer.UserId);
+        Assert.Equal(addedCustomer.Id, response.User.CustomerId);
+    }
+
+    /// <summary>
+    /// فهرست کاربران باید صفحه‌ی کاربران را به‌همراه شناسه‌ی پروفایل مشتری هر کدام برگرداند.
+    /// </summary>
+    [Fact]
+    public async Task GetPagedUsersAsync_ReturnsPageWithCustomerIds()
+    {
+        ApplicationUser firstUser = CreateUser("first@example.com");
+        ApplicationUser secondUser = CreateUser("second@example.com");
+        var linkedCustomer = new Customer { Id = Guid.NewGuid(), UserId = firstUser.Id, Email = firstUser.Email };
+        _userRepository.Setup(r => r.GetPagedAsync(
+                It.IsAny<string?>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedEntities<ApplicationUser>(new List<ApplicationUser> { firstUser, secondUser }, 2));
+        _customerRepository.Setup(r => r.GetByUserIdAsync(firstUser.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(linkedCustomer);
+        _customerRepository.Setup(r => r.GetByUserIdAsync(secondUser.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Customer?)null);
+
+        PagedResult<UserDto> result = await _service.GetPagedUsersAsync(
+            new PaginationParams { PageNumber = 1, PageSize = 10 },
+            null);
+
+        Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.Items.Count);
+        Assert.Equal(linkedCustomer.Id, result.Items[0].CustomerId);
+        Assert.Null(result.Items[1].CustomerId);
     }
 
     /// <summary>

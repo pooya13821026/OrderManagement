@@ -63,6 +63,7 @@ public static class DbInitializer
         (int createdCategories, Dictionary<string, Guid> categoryIdsByName) =
             await SeedCategoriesAsync(context, cancellationToken);
         int createdProducts = await SeedProductsAsync(context, categoryIdsByName, cancellationToken);
+        int linkedProfiles = await LinkSeededUserProfilesAsync(context, cancellationToken);
 
         // یک ذخیره‌ی واحد کل داده‌کاشت را اتمیک نگه می‌دارد: یا همه‌ی ردیف‌ها می‌نشینند یا هیچ‌کدام.
         await context.SaveChangesAsync(cancellationToken);
@@ -139,10 +140,83 @@ public static class DbInitializer
     }
 
     /// <summary>
-    /// جدول مشتریان را با داده‌ی فارسی (نام و نام‌خانوادگی ایرانی، موبایل ایرانی و آدرس
-    /// فارسی) تا <see cref="CustomerSeedCount"/> ردیف کامل می‌کند. ایمیل‌ها لاتین و یکتا
-    /// می‌مانند چون ایمیل فارسی در دنیای واقعی هم کاربردی ندارد. توالی قطعی است (seed 12345).
+    /// دو حساب داده‌کاشت‌شده (مدیر و کاربر نمایشی) را به پروفایل مشتری متصل می‌کند تا
+    /// مالکیت سفارش از همان ابتدا برای آن‌ها کار کند. چون ذخیره‌ی واحد انتهای
+    /// <see cref="SeedAsync"/> هنوز اعمال نشده، ردیف‌های لوکال ترکر هم دیده می‌شوند.
     /// </summary>
+    /// <param name="context">کانتکست دیتابیس.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <returns>تعداد اتصال‌های جدید.</returns>
+    private static async Task<int> LinkSeededUserProfilesAsync(
+        OrderManagementDbContext context,
+        CancellationToken cancellationToken)
+    {
+        // کاربران: اول لوکال (تازه‌ساخته‌شده و هنوز ذخیره‌نشده)، بعد دیتابیس.
+        List<ApplicationUser> users = context.Users.Local
+            .Concat(await context.Users.ToListAsync(cancellationToken))
+            .GroupBy(user => user.Id)
+            .Select(group => group.First())
+            .ToList();
+
+        ApplicationUser? admin = users.FirstOrDefault(user => user.Email == AdminEmail);
+        ApplicationUser? demoUser = users.FirstOrDefault(user => user.Email == UserEmail);
+        if (admin is null || demoUser is null)
+        {
+            return 0;
+        }
+
+        // مشتریان بدون پروفایل، به ترتیب ایمیل (قطعی و تکرارپذیر).
+        List<Customer> freeCustomers = context.Customers.Local
+            .Concat(await context.Customers.Where(customer => customer.UserId == null).ToListAsync(cancellationToken))
+            .Where(customer => customer.UserId == null)
+            .GroupBy(customer => customer.Id)
+            .Select(group => group.First())
+            .OrderBy(customer => customer.Email)
+            .ToList();
+
+        var consumedCustomerIds = new HashSet<Guid>();
+        int linked = 0;
+
+        foreach (ApplicationUser user in new[] { admin, demoUser })
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // اگر حساب از قبل پروفایل دارد (لوکال یا دیتابیس)، دست نزن (idempotent).
+            bool alreadyLinked = context.Customers.Local.Any(customer => customer.UserId == user.Id)
+                || await context.Customers.AnyAsync(customer => customer.UserId == user.Id, cancellationToken);
+
+            if (alreadyLinked)
+            {
+                continue;
+            }
+
+            Customer? candidate = freeCustomers
+                .FirstOrDefault(customer => !consumedCustomerIds.Contains(customer.Id));
+
+            if (candidate is null)
+            {
+                // مشتری آزادی نماند: پروفایل اختصاصی با ایمیل یکتا می‌سازیم.
+                candidate = new Customer
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = null,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Email = $"profile.{user.Email}",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                context.Customers.Add(candidate);
+            }
+
+            candidate.UserId = user.Id;
+            candidate.UpdatedAt = DateTime.UtcNow;
+            consumedCustomerIds.Add(candidate.Id);
+            linked++;
+        }
+
+        return linked;
+    }
     /// <param name="context">کانتکست دیتابیس.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <returns>تعداد مشتریانی که ایجاد شدند.</returns>

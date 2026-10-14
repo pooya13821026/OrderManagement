@@ -13,43 +13,75 @@ public interface IOrderService
     /// سفارش جدیدی را با وضعیت <see cref="OrderStatus.Pending"/> پس از اعتبارسنجی
     /// مشتری، محصولات سفارش‌داده‌شده و تعدادها ایجاد می‌کند، از قیمت‌های واحد اسنپ‌شات می‌گیرد
     /// و قیمت کل ردیف‌ها و مبلغ کل سفارش را محاسبه می‌کند.
+    /// فراخواننده‌ی غیرمدیر فقط می‌تواند برای پروفایل مشتریِ متصل به حساب خودش سفارش ثبت کند؛
+    /// مدیر می‌تواند برای هر مشتری معتبری سفارش بسازد.
     /// </summary>
     /// <param name="request">بدنه‌ی درخواست ایجاد سفارش.</param>
+    /// <param name="callerUserId">شناسه‌ی کاربر فراخواننده (از claims لایه‌ی API).</param>
+    /// <param name="callerRole">نقش کاربر فراخواننده (از claims لایه‌ی API).</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <returns>سفارش ایجادشده به‌صورت DTO.</returns>
-    Task<OrderDto> CreateAsync(CreateOrderRequest request, CancellationToken cancellationToken = default);
+    /// <exception cref="Domain.Exceptions.DomainException">وقتی کاربرِ غیرمدیر پروفایل مشتریِ متصل نداشته باشد پرتاب می‌شود.</exception>
+    /// <exception cref="Domain.Exceptions.UnauthorizedOperationException">وقتی غیرمدیر مشتریِ غیر از پروفایل خودش را بخواهد پرتاب می‌شود.</exception>
+    Task<OrderDto> CreateAsync(
+        CreateOrderRequest request,
+        Guid callerUserId,
+        string callerRole,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// یک سفارش را بر اساس شناسه، شامل مشتری و اقلام، برمی‌گرداند.
+    /// فراخواننده‌ی غیرمدیر فقط سفارش‌هایی را می‌بیند که مشتری‌اش به حساب او متصل است؛
+    /// مدیر همه‌ی سفارش‌ها را می‌بیند.
     /// </summary>
     /// <param name="id">شناسه‌ی سفارش.</param>
+    /// <param name="callerUserId">شناسه‌ی کاربر فراخواننده؛ ناموجود <c>null</c>.</param>
+    /// <param name="callerRole">نقش کاربر فراخواننده (از claims لایه‌ی API).</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <returns>سفارش به‌صورت DTO.</returns>
     /// <exception cref="Domain.Exceptions.EntityNotFoundException">وقتی سفارش وجود نداشته باشد پرتاب می‌شود.</exception>
-    Task<OrderDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    /// <exception cref="Domain.Exceptions.UnauthorizedOperationException">وقتی غیرمدیر سفارشی غیر از سفارش‌های خودش را بخواهد پرتاب می‌شود.</exception>
+    Task<OrderDto> GetByIdAsync(
+        Guid id,
+        Guid? callerUserId,
+        string callerRole,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// صفحه‌ای فیلترشده، مرتب‌شده و صفحه‌بندی‌شده از سفارش‌ها برمی‌گرداند.
+    /// برای فراخواننده‌ی غیرمدیر، فیلتر مشتری همیشه به پروفایل متصل به حساب او بازنویسی
+    /// می‌شود (بازنویسی فیلترِ ارسالی)؛ اگر حساب پروفایلی نداشته باشد صفحه‌ی خالی برمی‌گردد.
+    /// مدیر فیلتر دست‌نخورده می‌گیرد.
     /// </summary>
     /// <param name="filter">ورودی‌های فیلتر، مرتب‌سازی و صفحه‌بندی.</param>
+    /// <param name="callerUserId">شناسه‌ی کاربر فراخواننده؛ ناموجود <c>null</c>.</param>
+    /// <param name="callerRole">نقش کاربر فراخواننده (از claims لایه‌ی API).</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <returns>صفحه‌ای از DTOهای سفارش.</returns>
-    Task<PagedResult<OrderDto>> GetPagedAsync(OrderFilterParams filter, CancellationToken cancellationToken = default);
+    Task<PagedResult<OrderDto>> GetPagedAsync(
+        OrderFilterParams filter,
+        Guid? callerUserId,
+        string callerRole,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// سفارش را به وضعیت جدیدی می‌برد و قواعد گذار رو به جلو را اعمال می‌کند.
     /// هنگام تأیید، ابتدا موجودی همه‌ی اقلام اعتبارسنجی و سپس کاهش داده می‌شود؛
     /// لغو از <c>Confirmed</c> موجودی اقلام را برمی‌گرداند و لغو نیازمند نقش <c>Admin</c> است.
-    /// هر گذار در همان تراکنش، زمان‌نشان وضعیت و یک ردیف تاریخچه ثبت می‌کند و پس از
-    /// commit اطلاع‌رسانی (لاگ) انجام می‌شود.
+    /// علاوه بر آن فراخواننده‌ی غیرمدیر فقط می‌تواند سفارشِ متصل به حساب خودش را جلو ببرد؛
+    /// برای غیرمدیر بدون شناسه (<paramref name="changedByUserId"/> ناموجود) مالکیت اثبات
+    /// نمی‌شود و خطای ۴۰۳ می‌گیرد. هر گذار در همان تراکنش، زمان‌نشان وضعیت و یک ردیف
+    /// تاریخچه ثبت می‌کند و پس از commit اطلاع‌رسانی (لاگ) انجام می‌شود.
     /// </summary>
     /// <param name="orderId">شناسه‌ی سفارش.</param>
     /// <param name="newStatus">وضعیت جدید درخواستی.</param>
     /// <param name="requesterRole">نقش کاربر فراخواننده (از claims لایه‌ی API).</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <param name="reason">دلیل اختیاری تغییر (حداکثر ۵۰۰ نویسه)؛ فقط برای لغو معنا دارد.</param>
-    /// <param name="changedByUserId">شناسه‌ی کاربر فراخواننده برای ثبت در تاریخچه؛ ناموجود <c>null</c>.</param>
+    /// <param name="changedByUserId">شناسه‌ی کاربر فراخواننده برای مالکیت و ثبت در تاریخچه؛ ناموجود <c>null</c>.</param>
     /// <returns>سفارش به‌روزرسانی‌شده به‌صورت DTO.</returns>
+    /// <exception cref="Domain.Exceptions.EntityNotFoundException">وقتی سفارش وجود نداشته باشد پرتاب می‌شود.</exception>
+    /// <exception cref="Domain.Exceptions.UnauthorizedOperationException">وقتی فراخواننده مالک سفارش نباشد (یا غیرمدیر سفارش را لغو کند) پرتاب می‌شود.</exception>
     Task<OrderDto> UpdateStatusAsync(
         Guid orderId,
         OrderStatus newStatus,

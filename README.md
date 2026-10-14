@@ -23,7 +23,7 @@ API مدیریت سفارش‌های یک فروشگاه آنلاین با **Cle
 | JWT با نقش‌های Admin و User (ثبت‌نام/ورود/refresh/ابطال واقعی) | ✅ |
 | AsNoTracking، تراکنش، Bulk بهینه | ✅ |
 | Swagger + Postman Collection | ✅ |
-| Unit Test سرویس‌ها و منطق کسب‌وکار (۵۵ تست سبز) | ✅ |
+| Unit Test سرویس‌ها و منطق کسب‌وکار (۷۰ تست سبز) | ✅ |
 
 ## معماری و تصمیمات طراحی
 
@@ -55,7 +55,8 @@ Domain (مرکز، بدون وابستگی)
 - توکن refresh فقط به‌صورت هش SHA256 ذخیره و هنگام استفاده چرخش (rotation) می‌شود.
   ارائه‌ی توکن باطل‌شده کل زنجیره‌ی کاربر را باطل می‌کند (reuse detection).
 - اندپوینت‌های ناشناس احراز هویت (register/login/refresh) محدودیت نرخ دارند (۲۰ درخواست در دقیقه برای هر IP).
-- موجودی فقط از دو مسیر عوض می‌شود: Confirm سفارش (کاهش) و `PATCH /api/Products/AdjustStock/{id}` مخصوص Admin.
+- موجودی فقط از دو مسیر عوض می‌شود: Confirm سفارش (کاهش) و `POST /api/Products/AdjustStock/{id}` مخصوص Admin.
+- مالکیت: ثبت‌نام هم‌زمان یک پروفایل مشتریِ متصل به حساب می‌سازد؛ کاربر عادی فقط سفارش‌های خودش را می‌بیند/جلو می‌برد و فقط برای مشتری خودش سفارش ثبت می‌کند؛ خواندن مشتریان و فهرست کاربران فقط Admin.
 - Swagger در همه محیط‌ها فعال است تا ارزیابی مستندات راحت باشد
   (در محصول واقعی بهتر است فقط Development باشد).
 - کلید JWT داخل `appsettings.json` فقط برای توسعه/ارزیابی است؛ در استقرار واقعی از
@@ -138,11 +139,12 @@ Invoke-RestMethod http://localhost:8080/api/Orders/GetPaged -Headers @{ Authoriz
 | متد | مسیر | دسترسی |
 |---|---|---|
 | POST | `/api/Auth/Register` ،`/Login` ،`/Refresh` | آزاد |
-| POST | `/api/Auth/Revoke` — GET `/api/Auth/Me` | احرازشده |
-| POST `/api/Orders/Create` — GET `/api/Orders/GetPaged` (فیلتر+پیج) — GET `/api/Orders/GetById/{id}` | احرازشده |
-| POST `/api/Orders/UpdateStatus/{id}` (`{newStatus}`) | احرازشده (لغو فقط Admin) |
+| POST | `/api/Auth/Revoke` — GET `/api/Auth/Me` (شامل `customerId` متصل) | احرازشده |
+| GET `/api/Users/GetPaged` | فقط Admin |
+| POST `/api/Orders/Create` — GET `/api/Orders/GetPaged` (فیلتر+پیج) — GET `/api/Orders/GetById/{id}` | کاربر عادی فقط مال خودش، مدیر همه |
+| POST `/api/Orders/UpdateStatus/{id}` (`{newStatus}` + دلیل اختیاری) | مال خودش (لغو فقط Admin) |
 | POST `/api/Orders/Delete/{id}` — POST `/api/Orders/BulkCreate` | Admin |
-| GET `/api/Customers/GetPaged` ،`/GetById/{id}` — POST `/Create` ،`/Update/{id}` ،`/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
+| GET+POST `/api/Customers/...` (همه اکشن‌ها) | فقط Admin |
 | GET `/api/Categories/GetPaged` ،`/GetById/{id}` — POST `/Create` ،`/Update/{id}` ،`/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
 | GET `/api/Products/GetPaged` ،`/GetById/{id}` — POST `/Create` ،`/Update/{id}` ،`/Delete/{id}` | خواندن احرازشده، نوشتن Admin |
 | POST `/api/Products/AdjustStock/{id}` (`{quantityChange}`) | Admin |
@@ -154,8 +156,8 @@ Domain/            انتیتی‌ها، انام‌ها، استثناها، ق
 Application/       DTOها، اینترفیس‌ها، سرویس‌ها، مپینگ، ولیدیشن
 Infrastructure/    DbContext، کانفیگ‌ها، ریپازیتوری‌ها، UnitOfWork، امنیت، سید، مایگریشن‌ها
 Api/               کنترلرها، میدلور، تنظیمات DI، appsettings، Dockerfile
-Application.Tests/ ۵۵ تست واحد (OrderService، AuthService، ProductService، CategoryService)
-postman/           کالکشن ۲۲ درخواستی + environment
+Application.Tests/ ۷۰ تست واحد (OrderService، AuthService، ProductService، CategoryService)
+postman/           کالکشن ۲۸ درخواستی + environment
 docker-compose.yml SQL Server 2022 + API
 ```
 

@@ -11,8 +11,8 @@ namespace OrderManagement.Api.Controllers;
 /// نقطه‌پایان‌های مدیریت مشتریان: ایجاد، جست‌وجوی صفحه‌بندی‌شده، بازیابی، به‌روزرسانی و حذف.
 /// </summary>
 /// <remarks>
-/// خواندن برای هر کاربر احرازهویت‌شده باز است؛ عملیات نوشتن (POST) از طریق
-/// یک الزام نقش اضافی فقط به مدیران محدود شده است.
+/// خواندن و نوشتن مشتریان فقط برای مدیران است: رکورد مشتری حاوی داده‌ی شخصی
+/// (نام، ایمیل، تلفن و آدرس) است و کاربر عادی نباید فهرست مشتریان دیگر را ببیند.
 /// </remarks>
 [ApiController]
 [Route("api/[controller]/[action]")]
@@ -59,7 +59,7 @@ public class CustomersController : ControllerBase
     }
 
     /// <summary>
-    /// یک صفحه‌ی فیلترشده و صفحه‌بندی‌شده از مشتریان دریافت می‌کند.
+    /// یک صفحه‌ی فیلترشده و صفحه‌بندی‌شده از مشتریان دریافت می‌کند. فقط مدیران.
     /// </summary>
     /// <param name="parameters">پارامترهای پرس‌وجو <c>pageNumber</c> و <c>pageSize</c>.</param>
     /// <param name="searchTerm">عبارت اختیاری که با نام و ایمیل مقایسه می‌شود.</param>
@@ -68,10 +68,13 @@ public class CustomersController : ControllerBase
     /// <response code="200">صفحه برگردانده شد.</response>
     /// <response code="400">یک پارامتر پرس‌وجو نامعتبر بود.</response>
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
     [HttpGet]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(PagedResult<CustomerDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<PagedResult<CustomerDto>>> GetPaged(
         [FromQuery] PaginationParams parameters,
         [FromQuery] string? searchTerm,
@@ -86,17 +89,20 @@ public class CustomersController : ControllerBase
     }
 
     /// <summary>
-    /// یک مشتری را بر اساس شناسه دریافت می‌کند.
+    /// یک مشتری را بر اساس شناسه دریافت می‌کند. فقط مدیران.
     /// </summary>
     /// <param name="id">شناسه‌ی مشتری.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <returns>مشتری درخواستی.</returns>
     /// <response code="200">مشتری برگردانده شد.</response>
     /// <response code="401">هیچ توکن دسترسی معتبری ارائه نشده است.</response>
+    /// <response code="403">فراخواننده مدیر نیست.</response>
     /// <response code="404">مشتری‌ای با این شناسه وجود ندارد.</response>
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = Roles.Admin)]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CustomerDto>> GetById(Guid id, CancellationToken cancellationToken)
     {

@@ -36,6 +36,18 @@ public class Customer
     public string? Address { get; set; }
 
     /// <summary>
+    /// شناسه‌ی حساب کاربری متصل به این پروفایل مشتری، یا <c>null</c> اگر حسابی نداشته باشد.
+    /// عمداً nullable است: ردیف‌های قدیمی و داده‌کاشت‌شده پیش از ایجاد این پیوند ساخته شده‌اند
+    /// و نباید با مقداردهی اجباری بشکنند؛ فقط ثبت‌نام‌های تازه و اتصال seed آن را پر می‌کنند.
+    /// </summary>
+    public Guid? UserId { get; set; }
+
+    /// <summary>
+    /// حساب کاربری متصل به این پروفایل مشتری، یا <c>null</c> اگر پیوندی وجود نداشته باشد.
+    /// </summary>
+    public ApplicationUser? User { get; set; }
+
+    /// <summary>
     /// زمان‌نشان UTC هنگام ایجاد رکورد مشتری.
     /// </summary>
     public DateTime CreatedAt { get; set; }

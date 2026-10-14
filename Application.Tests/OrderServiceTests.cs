@@ -1,4 +1,5 @@
 using Moq;
+using OrderManagement.Application.Common;
 using OrderManagement.Application.Dtos.Orders;
 using OrderManagement.Application.Interfaces;
 using OrderManagement.Application.Services;
@@ -63,7 +64,7 @@ public class OrderServiceTests
             }
         };
 
-        OrderDto result = await _service.CreateAsync(request);
+        OrderDto result = await _service.CreateAsync(request, Guid.NewGuid(), Roles.Admin);
 
         Assert.Equal(OrderStatus.Pending, result.Status);
         Assert.Equal(customer.Id, result.CustomerId);
@@ -99,7 +100,7 @@ public class OrderServiceTests
             }
         };
 
-        await Assert.ThrowsAsync<EntityNotFoundException>(() => _service.CreateAsync(request));
+        await Assert.ThrowsAsync<EntityNotFoundException>(() => _service.CreateAsync(request, Guid.NewGuid(), Roles.Admin));
 
         _orderRepository.Verify(r => r.AddAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
@@ -126,7 +127,7 @@ public class OrderServiceTests
             }
         };
 
-        await Assert.ThrowsAsync<DomainException>(() => _service.CreateAsync(request));
+        await Assert.ThrowsAsync<DomainException>(() => _service.CreateAsync(request, Guid.NewGuid(), Roles.Admin));
 
         _orderRepository.Verify(r => r.AddAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -139,9 +140,11 @@ public class OrderServiceTests
     {
         Product product = CreateProduct(stockQuantity: 10, price: 50m);
         Order order = CreateOrderWithItem(product, quantity: 2);
+        Guid ownerId = Guid.NewGuid();
+        order.Customer.UserId = ownerId;
         _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
 
-        OrderDto result = await _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User);
+        OrderDto result = await _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User, changedByUserId: ownerId);
 
         Assert.Equal(OrderStatus.Confirmed, result.Status);
         Assert.Equal(OrderStatus.Confirmed, order.Status);
@@ -161,10 +164,12 @@ public class OrderServiceTests
     {
         Product product = CreateProduct(stockQuantity: 1, price: 50m);
         Order order = CreateOrderWithItem(product, quantity: 2);
+        Guid ownerId = Guid.NewGuid();
+        order.Customer.UserId = ownerId;
         _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
 
         InsufficientStockException exception = await Assert.ThrowsAsync<InsufficientStockException>(
-            () => _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User));
+            () => _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User, changedByUserId: ownerId));
 
         Assert.Equal(product.Id, exception.ProductId);
         Assert.Equal(1, exception.Available);
@@ -280,6 +285,7 @@ public class OrderServiceTests
         Product product = CreateProduct(stockQuantity: 10, price: 50m);
         Order order = CreateOrderWithItem(product, quantity: 1);
         Guid changedByUserId = Guid.NewGuid();
+        order.Customer.UserId = changedByUserId;
         _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
 
         await _service.UpdateStatusAsync(
@@ -321,16 +327,18 @@ public class OrderServiceTests
     {
         Product product = CreateProduct(stockQuantity: 10, price: 50m);
         Order order = CreateOrderWithItem(product, quantity: 1);
+        Guid ownerId = Guid.NewGuid();
+        order.Customer.UserId = ownerId;
         _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
 
-        await _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User);
+        await _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User, changedByUserId: ownerId);
 
         Assert.NotNull(order.ConfirmedAt);
         Assert.Null(order.ShippedAt);
         Assert.Null(order.DeliveredAt);
         Assert.Null(order.CancelledAt);
 
-        await _service.UpdateStatusAsync(order.Id, OrderStatus.Shipped, Roles.User);
+        await _service.UpdateStatusAsync(order.Id, OrderStatus.Shipped, Roles.User, changedByUserId: ownerId);
 
         Assert.NotNull(order.ShippedAt);
         Assert.NotNull(order.ConfirmedAt);
@@ -466,6 +474,195 @@ public class OrderServiceTests
         await Assert.ThrowsAsync<EntityNotFoundException>(() => _service.DeleteAsync(orderId));
 
         _orderRepository.Verify(r => r.Remove(It.IsAny<Order>()), Times.Never);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// ایجاد سفارش توسط کاربر عادی با مشتریِ متصل به خودش باید موفق باشد.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_AsUserWithOwnCustomer_Succeeds()
+    {
+        Guid userId = Guid.NewGuid();
+        Customer customer = CreateCustomer();
+        customer.UserId = userId;
+        Product product = CreateProduct(stockQuantity: 10, price: 100m);
+        _customerRepository.Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(customer);
+        _productRepository.Setup(r => r.GetByIdsAsync(It.IsAny<IEnumerable<Guid>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Product> { product });
+        _orderRepository.Setup(r => r.ExistsByOrderNumberAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        var request = new CreateOrderRequest
+        {
+            CustomerId = customer.Id,
+            Items = new List<CreateOrderItemRequest> { new() { ProductId = product.Id, Quantity = 1 } }
+        };
+
+        OrderDto result = await _service.CreateAsync(request, userId, Roles.User);
+
+        Assert.Equal(customer.Id, result.CustomerId);
+        Assert.Equal(OrderStatus.Pending, result.Status);
+    }
+
+    /// <summary>
+    /// ایجاد سفارش توسط کاربر عادی با مشتریِ دیگری باید UnauthorizedOperationException پرتاب کند.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_AsUserWithForeignCustomerId_ThrowsUnauthorized()
+    {
+        Guid userId = Guid.NewGuid();
+        Customer ownCustomer = CreateCustomer();
+        ownCustomer.UserId = userId;
+        _customerRepository.Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(ownCustomer);
+
+        var request = new CreateOrderRequest
+        {
+            CustomerId = Guid.NewGuid(),
+            Items = new List<CreateOrderItemRequest> { new() { ProductId = Guid.NewGuid(), Quantity = 1 } }
+        };
+
+        await Assert.ThrowsAsync<UnauthorizedOperationException>(
+            () => _service.CreateAsync(request, userId, Roles.User));
+
+        _orderRepository.Verify(r => r.AddAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// ایجاد سفارش توسط کاربر عادیِ بدون پروفایل مشتری باید DomainException پرتاب کند.
+    /// </summary>
+    [Fact]
+    public async Task CreateAsync_AsUserWithoutProfile_ThrowsDomain()
+    {
+        Guid userId = Guid.NewGuid();
+        _customerRepository.Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Customer?)null);
+
+        var request = new CreateOrderRequest
+        {
+            CustomerId = Guid.NewGuid(),
+            Items = new List<CreateOrderItemRequest> { new() { ProductId = Guid.NewGuid(), Quantity = 1 } }
+        };
+
+        await Assert.ThrowsAsync<DomainException>(() => _service.CreateAsync(request, userId, Roles.User));
+
+        _orderRepository.Verify(r => r.AddAsync(It.IsAny<Order>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// دیدن سفارش دیگری توسط کاربر عادی باید UnauthorizedOperationException پرتاب کند.
+    /// </summary>
+    [Fact]
+    public async Task GetByIdAsync_AsNonOwner_ThrowsUnauthorized()
+    {
+        Product product = CreateProduct(stockQuantity: 10, price: 50m);
+        Order order = CreateOrderWithItem(product, quantity: 1);
+        order.Customer.UserId = Guid.NewGuid();
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        await Assert.ThrowsAsync<UnauthorizedOperationException>(
+            () => _service.GetByIdAsync(order.Id, Guid.NewGuid(), Roles.User));
+    }
+
+    /// <summary>
+    /// مدیر باید سفارش کاربران دیگر را هم ببیند.
+    /// </summary>
+    [Fact]
+    public async Task GetByIdAsync_AsAdminSeesOthersOrder_Returns()
+    {
+        Product product = CreateProduct(stockQuantity: 10, price: 50m);
+        Order order = CreateOrderWithItem(product, quantity: 1);
+        order.Customer.UserId = Guid.NewGuid();
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        OrderDto result = await _service.GetByIdAsync(order.Id, Guid.NewGuid(), Roles.Admin);
+
+        Assert.Equal(order.Id, result.Id);
+    }
+
+    /// <summary>
+    /// فهرست سفارش‌های کاربر عادی باید همیشه با مشتریِ خودش فیلتر شود، حتی اگر customerId دیگری بفرستد.
+    /// </summary>
+    [Fact]
+    public async Task GetPagedAsync_AsUser_ForcesOwnCustomer()
+    {
+        Guid userId = Guid.NewGuid();
+        Customer ownCustomer = CreateCustomer();
+        ownCustomer.UserId = userId;
+        _customerRepository.Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>())).ReturnsAsync(ownCustomer);
+        _orderRepository.Setup(r => r.GetPagedAsync(
+                It.IsAny<Guid?>(),
+                It.IsAny<OrderStatus?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<DateTime?>(),
+                It.IsAny<string?>(),
+                It.IsAny<string?>(),
+                It.IsAny<bool>(),
+                It.IsAny<int>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PagedEntities<Order>(new List<Order>(), 0));
+
+        var filter = new OrderFilterParams { CustomerId = Guid.NewGuid(), PageNumber = 1, PageSize = 10 };
+
+        PagedResult<OrderDto> result = await _service.GetPagedAsync(filter, userId, Roles.User);
+
+        Assert.Equal(0, result.TotalCount);
+        _orderRepository.Verify(r => r.GetPagedAsync(
+            It.Is<Guid?>(customerId => customerId == ownCustomer.Id),
+            It.IsAny<OrderStatus?>(),
+            It.IsAny<DateTime?>(),
+            It.IsAny<DateTime?>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<bool>(),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// فهرست سفارش‌های کاربر عادیِ بدون پروفایل باید خالی برگردد، نه خطا.
+    /// </summary>
+    [Fact]
+    public async Task GetPagedAsync_AsUserWithoutProfile_ReturnsEmpty()
+    {
+        Guid userId = Guid.NewGuid();
+        _customerRepository.Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Customer?)null);
+
+        PagedResult<OrderDto> result = await _service.GetPagedAsync(new OrderFilterParams(), userId, Roles.User);
+
+        Assert.Equal(0, result.TotalCount);
+        Assert.Empty(result.Items);
+        _orderRepository.Verify(r => r.GetPagedAsync(
+            It.IsAny<Guid?>(),
+            It.IsAny<OrderStatus?>(),
+            It.IsAny<DateTime?>(),
+            It.IsAny<DateTime?>(),
+            It.IsAny<string?>(),
+            It.IsAny<string?>(),
+            It.IsAny<bool>(),
+            It.IsAny<int>(),
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// جلو بردن سفارش دیگری توسط کاربر عادی باید UnauthorizedOperationException پرتاب کند.
+    /// </summary>
+    [Fact]
+    public async Task UpdateStatusAsync_AsNonOwner_ThrowsUnauthorized()
+    {
+        Product product = CreateProduct(stockQuantity: 10, price: 50m);
+        Order order = CreateOrderWithItem(product, quantity: 1);
+        order.Customer.UserId = Guid.NewGuid();
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        await Assert.ThrowsAsync<UnauthorizedOperationException>(
+            () => _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User, changedByUserId: Guid.NewGuid()));
+
+        Assert.Equal(OrderStatus.Pending, order.Status);
         _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 

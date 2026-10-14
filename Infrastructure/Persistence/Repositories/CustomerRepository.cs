@@ -34,6 +34,21 @@ public class CustomerRepository : EfRepository<Customer, Guid>, ICustomerReposit
     }
 
     /// <inheritdoc />
+    public async Task<Customer?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        if (userId == Guid.Empty)
+        {
+            return null;
+        }
+
+        // عمداً tracked (برخلاف GetByEmailAsync که فقط‌نمایشی و AsNoTracking است):
+        // CreateAsync سفارش، مشتریِ برگردانده‌شده را در گراف سفارش attach می‌کند و یک
+        // نمونه‌ی detached دوباره درج می‌شود (همان قاعده‌ی مستندشده در EfRepository).
+        return await Context.Customers
+            .FirstOrDefaultAsync(customer => customer.UserId == userId, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(email))

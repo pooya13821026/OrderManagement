@@ -1,3 +1,4 @@
+using OrderManagement.Application.Common;
 using OrderManagement.Application.Dtos.Auth;
 using OrderManagement.Application.Interfaces;
 using OrderManagement.Application.Mapping;
@@ -5,6 +6,7 @@ using OrderManagement.Application.Validators;
 using OrderManagement.Domain.Entities;
 using OrderManagement.Domain.Enums;
 using OrderManagement.Domain.Exceptions;
+using OrderManagement.Domain.Repositories;
 
 namespace OrderManagement.Application.Services;
 
@@ -72,9 +74,26 @@ public class AuthService : IAuthService
         };
 
         await _unitOfWork.Users.AddAsync(user, cancellationToken);
+
+        // پروفایل مشتریِ متصل به همین حساب، در همان ذخیره‌سازی ساخته می‌شود تا مالکیت
+        // سفارش‌ها از روز اول معنا داشته باشد (ثبت‌نام = یک حساب + یک پروفایل مشتری).
+        DateTime now = DateTime.UtcNow;
+        var customer = new Customer
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            Email = normalizedEmail,
+            Phone = request.PhoneNumber?.Trim(),
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        await _unitOfWork.Customers.AddAsync(customer, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return await IssueTokensAsync(user, cancellationToken);
+        return await IssueTokensAsync(user, customer.Id, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -103,7 +122,7 @@ public class AuthService : IAuthService
         _unitOfWork.Users.Update(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return await IssueTokensAsync(user, cancellationToken);
+        return await IssueTokensAsync(user, await ResolveCustomerIdAsync(user.Id, cancellationToken), cancellationToken);
     }
 
     /// <inheritdoc />
@@ -164,7 +183,7 @@ public class AuthService : IAuthService
             AccessToken = _tokenService.GenerateAccessToken(user),
             RefreshToken = newRawToken,
             ExpiresAt = DateTime.UtcNow.AddMinutes(_tokenService.AccessTokenLifetimeMinutes),
-            User = user.ToDto()
+            User = user.ToDto(await ResolveCustomerIdAsync(user.Id, cancellationToken))
         };
     }
 
@@ -193,14 +212,52 @@ public class AuthService : IAuthService
         ApplicationUser user = await _unitOfWork.Users.GetByIdAsync(userId, cancellationToken)
             ?? throw new EntityNotFoundException(nameof(ApplicationUser), userId);
 
-        return user.ToDto();
+        return user.ToDto(await ResolveCustomerIdAsync(user.Id, cancellationToken));
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResult<UserDto>> GetPagedUsersAsync(
+        PaginationParams parameters,
+        string? searchTerm,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+        parameters.Normalize();
+
+        PagedEntities<ApplicationUser> page = await _unitOfWork.Users.GetPagedAsync(
+            string.IsNullOrWhiteSpace(searchTerm) ? null : searchTerm.Trim(),
+            parameters.PageNumber,
+            parameters.PageSize,
+            cancellationToken);
+
+        // فهرست مدیران کوچک است؛ حلقه‌ی N+1 به‌جای join پیچیده پذیرفتنی است.
+        var items = new List<UserDto>(page.Items.Count);
+        foreach (ApplicationUser listedUser in page.Items)
+        {
+            items.Add(listedUser.ToDto(await ResolveCustomerIdAsync(listedUser.Id, cancellationToken)));
+        }
+
+        return new PagedResult<UserDto>(items, parameters.PageNumber, parameters.PageSize, page.TotalCount);
+    }
+
+    /// <summary>
+    /// شناسه‌ی پروفایل مشتریِ متصل به حساب را برمی‌گرداند، یا <c>null</c> وقتی حساب
+    /// قدیمی هنوز پروفایل ندارد.
+    /// </summary>
+    private async Task<Guid?> ResolveCustomerIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        Customer? customer = await _unitOfWork.Customers.GetByUserIdAsync(userId, cancellationToken);
+        return customer?.Id;
     }
 
     /// <summary>
     /// جفت توکن دسترسی و refresh جدیدی برای کاربر صادر می‌کند و هش توکن refresh را ذخیره
     /// می‌کند تا هنگام refresh قابل اعتبارسنجی باشد.
     /// </summary>
-    private async Task<AuthResponse> IssueTokensAsync(ApplicationUser user, CancellationToken cancellationToken)
+    private async Task<AuthResponse> IssueTokensAsync(
+        ApplicationUser user,
+        Guid? customerId,
+        CancellationToken cancellationToken)
     {
         string rawRefreshToken = _tokenService.GenerateRefreshToken();
         string tokenHash = _tokenService.HashRefreshToken(rawRefreshToken);
@@ -222,7 +279,7 @@ public class AuthService : IAuthService
             AccessToken = _tokenService.GenerateAccessToken(user),
             RefreshToken = rawRefreshToken,
             ExpiresAt = DateTime.UtcNow.AddMinutes(_tokenService.AccessTokenLifetimeMinutes),
-            User = user.ToDto()
+            User = user.ToDto(customerId)
         };
     }
 

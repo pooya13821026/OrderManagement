@@ -27,4 +27,18 @@ public interface IUserRepository : IRepository<ApplicationUser, Guid>
     /// <param name="email">آدرس ایمیلی که باید بررسی شود.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// صفحه‌ای از کاربران را برمی‌گرداند، به‌صورت اختیاری با فیلتر جست‌وجوی متنی آزاد
+    /// که روی نام کاربری، ایمیل و نام/نام خانواده تطبیق داده می‌شود (فهرست مدیریت کاربران).
+    /// </summary>
+    /// <param name="searchTerm">عبارت جست‌وجوی اختیاری؛ اگر <c>null</c> یا خالی باشد همه‌ی کاربران برمی‌گردند.</param>
+    /// <param name="pageNumber">شماره‌ی صفحه که از ۱ شروع می‌شود.</param>
+    /// <param name="pageSize">تعداد اقلام در هر صفحه.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    Task<PagedEntities<ApplicationUser>> GetPagedAsync(
+        string? searchTerm,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

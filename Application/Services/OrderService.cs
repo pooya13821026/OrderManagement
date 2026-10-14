@@ -47,11 +47,19 @@ public class OrderService : IOrderService
     }
 
     /// <inheritdoc />
-    public async Task<OrderDto> CreateAsync(CreateOrderRequest request, CancellationToken cancellationToken = default)
+    public async Task<OrderDto> CreateAsync(
+        CreateOrderRequest request,
+        Guid callerUserId,
+        string callerRole,
+        CancellationToken cancellationToken = default)
     {
         RequestValidator.ValidateOrderRequest(request);
 
-        Customer customer = await GetCustomerOrFailAsync(request.CustomerId, cancellationToken);
+        Customer customer = await ResolveCustomerForCreateAsync(
+            request,
+            callerUserId,
+            callerRole,
+            cancellationToken);
         IReadOnlyDictionary<Guid, Product> productsById = await LoadOrderedProductsOrFailAsync(request, cancellationToken);
         string orderNumber = await GenerateUniqueOrderNumberAsync(cancellationToken);
         Order order = BuildOrder(request, orderNumber, customer, productsById);
@@ -73,24 +81,57 @@ public class OrderService : IOrderService
     }
 
     /// <inheritdoc />
-    public async Task<OrderDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<OrderDto> GetByIdAsync(
+        Guid id,
+        Guid? callerUserId,
+        string callerRole,
+        CancellationToken cancellationToken = default)
     {
         RequestValidator.EnsureNotEmptyId(id, nameof(id));
 
         Order order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(id, cancellationToken)
             ?? throw new EntityNotFoundException(nameof(Order), id);
 
+        // مشتری همراه سفارش include شده است؛ UserIdِ آن بدون include اضافی می‌آید.
+        EnsureCallerOwnsOrder(order, callerUserId, callerRole);
+
         return order.ToDto();
     }
 
     /// <inheritdoc />
-    public async Task<PagedResult<OrderDto>> GetPagedAsync(OrderFilterParams filter, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<OrderDto>> GetPagedAsync(
+        OrderFilterParams filter,
+        Guid? callerUserId,
+        string callerRole,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(filter);
         filter.Normalize();
 
+        Guid? customerId = filter.CustomerId;
+        if (!IsAdmin(callerRole))
+        {
+            // غیرمدیر همیشه فقط سفارش‌های مشتریِ متصل به حساب خودش را می‌بیند؛ فیلترِ
+            // ارسالی بازنویسی می‌شود. بدون پروفایل (یا بدون شناسه‌ی کاربر معتبر) به‌جای
+            // خطا صفحه‌ی خالی برمی‌گردد تا فهرست برای همه‌ی کاربران کار کند.
+            Customer? linkedCustomer = callerUserId is { } userIdValue
+                ? await _unitOfWork.Customers.GetByUserIdAsync(userIdValue, cancellationToken)
+                : null;
+
+            if (linkedCustomer is null)
+            {
+                return new PagedResult<OrderDto>(
+                    Array.Empty<OrderDto>(),
+                    filter.PageNumber,
+                    filter.PageSize,
+                    0);
+            }
+
+            customerId = linkedCustomer.Id;
+        }
+
         PagedEntities<Order> page = await _unitOfWork.Orders.GetPagedAsync(
-            filter.CustomerId,
+            customerId,
             filter.Status,
             filter.FromDate,
             filter.ToDate,
@@ -122,6 +163,8 @@ public class OrderService : IOrderService
             throw new DomainException($"دلیل تغییر وضعیت نمی‌تواند بیش از {MaxReasonLength} نویسه باشد.");
         }
 
+        // ترتیب خطاها: اول ۴۰۴ (سفارش ناموجود)، بعد قاعده‌ی لغوِ مخصوص مدیر، بعد مالکیت
+        // (هر دو ۴۰۳) و در آخر قواعد گذار (۴۰۰)؛ بنابراین پاسخ‌ها پیش‌بینی‌پذیر می‌مانند.
         Order order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(orderId, cancellationToken)
             ?? throw new EntityNotFoundException(nameof(Order), orderId);
 
@@ -130,6 +173,10 @@ public class OrderService : IOrderService
         {
             throw new UnauthorizedOperationException("فقط مدیران اجازه‌ی لغو سفارش‌ها را دارند.");
         }
+
+        // مالکیت پیش از بررسی گذار: غیرمدیر بدون شناسه (null) مالکیت را نمی‌تواند اثبات کند
+        // و پیش‌فرض امن ۴۰۳ است؛ غیرمدیرِ بدون شناسه، مالک هیچ سفارشی شناخته نمی‌شود.
+        EnsureCallerOwnsOrder(order, changedByUserId, requesterRole);
 
         if (!CanTransition(order.Status, newStatus))
         {
@@ -309,6 +356,71 @@ public class OrderService : IOrderService
             OrderStatus.Cancelled => false,
             _ => false
         };
+    }
+
+    /// <summary>
+    /// موجودیت <see cref="Order"/> جدیدی را از درخواست می‌سازد: قیمت فعلی هر محصول را در
+    /// ردیف‌های سفارش اسنپ‌شات می‌کند و قیمت کل ردیف‌ها و مبلغ کل سفارش را محاسبه می‌کند.
+    /// قیمت کاتالوگ محصول ممکن است بعداً تغییر کند؛ سفارش‌ها همیشه اسنپ‌شات خود را نگه می‌دارند.
+    /// </summary>
+    private static bool IsAdmin(string callerRole)
+    {
+        // مقایسه‌ی دقیق و حساس به حروف؛ نقش از توکن معتبر JWT می‌آید نه از ورودی کاربر.
+        return string.Equals(callerRole, Roles.Admin, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// بررسی می‌کند فراخواننده حق دیدن/تغییر این سفارش را دارد یا نه: مدیر همه‌ی
+    /// سفارش‌ها را می‌بیند؛ غیرمدیر فقط وقتی که شناسه‌اش با UserId مشتریِ سفارش یکی باشد.
+    /// شناسه‌ی null یعنی مالکیت اثبات‌نشده و پیش‌فرض امن ۴۰۳ است.
+    /// </summary>
+    /// <param name="order">سفارشِ همراه با مشتریِ includeشده.</param>
+    /// <param name="callerUserId">شناسه‌ی فراخواننده یا <c>null</c>.</param>
+    /// <param name="callerRole">نقش فراخواننده.</param>
+    private static void EnsureCallerOwnsOrder(Order order, Guid? callerUserId, string callerRole)
+    {
+        if (IsAdmin(callerRole))
+        {
+            return;
+        }
+
+        if (callerUserId is { } userId
+            && order.Customer is { } customer
+            && customer.UserId == userId)
+        {
+            return;
+        }
+
+        throw new UnauthorizedOperationException("این سفارش متعلق به شما نیست.");
+    }
+
+    /// <summary>
+    /// مشتریِ سفارشِ در حال ایجاد را مشخص می‌کند: مدیر هر مشتری معتبر؛ غیرمدیر فقط
+    /// پروفایل مشتریِ متصل به حساب خودش (درخواست با CustomerId بیگانه ۴۰۳ می‌گیرد).
+    /// </summary>
+    private async Task<Customer> ResolveCustomerForCreateAsync(
+        CreateOrderRequest request,
+        Guid callerUserId,
+        string callerRole,
+        CancellationToken cancellationToken)
+    {
+        if (IsAdmin(callerRole))
+        {
+            return await GetCustomerOrFailAsync(request.CustomerId, cancellationToken);
+        }
+
+        Customer? linkedCustomer = await _unitOfWork.Customers.GetByUserIdAsync(callerUserId, cancellationToken);
+        if (linkedCustomer is null)
+        {
+            throw new DomainException("برای حساب شما پروفایل مشتری ساخته نشده است؛ با مدیر تماس بگیرید.");
+        }
+
+        if (linkedCustomer.Id != request.CustomerId)
+        {
+            throw new UnauthorizedOperationException("فقط می‌توانید برای مشتریِ متصل به حساب خودتان سفارش ثبت کنید.");
+        }
+
+        return linkedCustomer;
     }
 
     /// <summary>

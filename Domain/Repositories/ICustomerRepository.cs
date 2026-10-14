@@ -15,6 +15,14 @@ public interface ICustomerRepository : IRepository<Customer, Guid>
     Task<Customer?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// پروفایل مشتری متصل به حساب کاربری داده‌شده را برمی‌گرداند، یا اگر حسابِ بدون پروفایل
+    /// (یا شناسه‌ی ناموجود) باشد <c>null</c>. برای کنترل مالکیت سفارش‌ها استفاده می‌شود.
+    /// </summary>
+    /// <param name="userId">شناسه‌ی حساب کاربری که باید جست‌وجو شود.</param>
+    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    Task<Customer?> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// تعیین می‌کند که آیا مشتری‌ای با این ایمیل از قبل وجود دارد یا نه.
     /// </summary>
     /// <param name="email">آدرس ایمیلی که باید بررسی شود.</param>

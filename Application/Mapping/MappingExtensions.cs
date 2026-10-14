@@ -168,8 +168,10 @@ public static class MappingExtensions
     /// هش گذرواژه و مهر امنیتی عمداً هرگز افشا نمی‌شوند.
     /// </summary>
     /// <param name="user">موجودیت کاربری که باید نگاشت شود.</param>
+    /// <param name="customerId">شناسه‌ی پروفایل مشتری متصل به کاربر یا <c>null</c> اگر پیوندی نباشد؛
+    /// فراخواننده (سرویس احراز هویت) آن را از مخزن مشتریان resolve می‌کند.</param>
     /// <returns>DTO کاربر.</returns>
-    public static UserDto ToDto(this ApplicationUser user)
+    public static UserDto ToDto(this ApplicationUser user, Guid? customerId = null)
     {
         ArgumentNullException.ThrowIfNull(user);
 
@@ -184,7 +186,8 @@ public static class MappingExtensions
             IsActive = user.IsActive,
             Role = user.Role,
             CreatedAt = user.CreatedAt,
-            LastLoginAt = user.LastLoginAt
+            LastLoginAt = user.LastLoginAt,
+            CustomerId = customerId
         };
     }
 }

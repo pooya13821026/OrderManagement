@@ -58,4 +58,43 @@ public class UserRepository : EfRepository<ApplicationUser, Guid>, IUserReposito
         return await Context.Users
             .AnyAsync(user => user.Email == email, cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<PagedEntities<ApplicationUser>> GetPagedAsync(
+        string? searchTerm,
+        int pageNumber,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        // فهرست مدیریت فقط‌خواندنی است (کنترلر Admin)؛ بدون ردیابی تغذیه می‌شود.
+        IQueryable<ApplicationUser> query = Context.Users.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            string term = searchTerm.Trim();
+            query = query.Where(user =>
+                user.UserName.Contains(term)
+                || user.Email.Contains(term)
+                || user.FirstName.Contains(term)
+                || user.LastName.Contains(term));
+        }
+
+        int totalCount = await query.CountAsync(cancellationToken);
+
+        // ورودی‌های صفحه‌بندی را محدود می‌کنیم تا اشتباه فراخواننده هرگز نتواند Skip/Take منفی تولید کند.
+        int safePageNumber = Math.Max(pageNumber, 1);
+        int safePageSize = Math.Max(pageSize, 1);
+
+        // مرتب‌سازی قطعی (نام کاربری، سپس ایمیل یکتا به‌عنوان شکننده‌ی تساوی) صفحات را
+        // هنگام صفحه‌بندی پایدار نگه می‌دارد - در غیر این صورت ردیف‌ها ممکن است میان
+        // درخواست‌های صفحه ظاهر یا ناپدید شوند.
+        IReadOnlyList<ApplicationUser> items = await query
+            .OrderBy(user => user.UserName)
+            .ThenBy(user => user.Email)
+            .Skip((safePageNumber - 1) * safePageSize)
+            .Take(safePageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedEntities<ApplicationUser>(items, totalCount);
+    }
 }
