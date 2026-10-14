@@ -21,6 +21,8 @@ public class OrderServiceTests
     private readonly Mock<ICustomerRepository> _customerRepository = new();
     private readonly Mock<IProductRepository> _productRepository = new();
     private readonly Mock<IOrderItemRepository> _orderItemRepository = new();
+    private readonly Mock<IRepository<OrderStatusHistory, Guid>> _orderStatusHistoryRepository = new();
+    private readonly Mock<INotificationService> _notificationService = new();
     private readonly OrderService _service;
 
     /// <summary>
@@ -32,9 +34,10 @@ public class OrderServiceTests
         _unitOfWork.SetupGet(u => u.Customers).Returns(_customerRepository.Object);
         _unitOfWork.SetupGet(u => u.Products).Returns(_productRepository.Object);
         _unitOfWork.SetupGet(u => u.OrderItems).Returns(_orderItemRepository.Object);
+        _unitOfWork.SetupGet(u => u.OrderStatusHistory).Returns(_orderStatusHistoryRepository.Object);
         _unitOfWork.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-        _service = new OrderService(_unitOfWork.Object);
+        _service = new OrderService(_unitOfWork.Object, _notificationService.Object);
     }
 
     /// <summary>
@@ -230,6 +233,136 @@ public class OrderServiceTests
     }
 
     /// <summary>
+    /// لغو سفارش تأییدشده باید دقیقاً به اندازه‌ای که Confirm موجودی کم کرده بود برگرداند.
+    /// </summary>
+    [Fact]
+    public async Task CancelFromConfirmed_RestoresStock()
+    {
+        Product product = CreateProduct(stockQuantity: 8, price: 50m);
+        Order order = CreateOrderWithItem(product, quantity: 2, status: OrderStatus.Confirmed);
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        OrderDto result = await _service.UpdateStatusAsync(order.Id, OrderStatus.Cancelled, Roles.Admin);
+
+        Assert.Equal(OrderStatus.Cancelled, result.Status);
+        Assert.Equal(10, product.StockQuantity);
+        _productRepository.Verify(r => r.Update(product), Times.Once);
+        _orderRepository.Verify(r => r.Update(order), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
+    /// لغو سفارش Pending هرگز موجودی را دست نمی‌زند چون Confirm رخ نداده و چیزی برای بازگرداندن نیست.
+    /// </summary>
+    [Fact]
+    public async Task CancelFromPending_DoesNotTouchStock()
+    {
+        Product product = CreateProduct(stockQuantity: 10, price: 50m);
+        Order order = CreateOrderWithItem(product, quantity: 2, status: OrderStatus.Pending);
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        OrderDto result = await _service.UpdateStatusAsync(order.Id, OrderStatus.Cancelled, Roles.Admin);
+
+        Assert.Equal(OrderStatus.Cancelled, result.Status);
+        Assert.Equal(10, product.StockQuantity);
+        _productRepository.Verify(r => r.Update(It.IsAny<Product>()), Times.Never);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
+    /// هر گذار موفق باید دقیقاً یک ردیف تاریخچه با وضعیت مبدأ/مقصد، زمان، نقش و شناسه‌ی
+    /// کاربر ثبت کند و پس از commit اطلاع‌رسانی (لاگ) فراخوانی شود.
+    /// </summary>
+    [Fact]
+    public async Task StatusChange_RecordsHistoryRow()
+    {
+        Product product = CreateProduct(stockQuantity: 10, price: 50m);
+        Order order = CreateOrderWithItem(product, quantity: 1);
+        Guid changedByUserId = Guid.NewGuid();
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        await _service.UpdateStatusAsync(
+            order.Id,
+            OrderStatus.Confirmed,
+            Roles.User,
+            reason: null,
+            changedByUserId: changedByUserId);
+
+        _orderStatusHistoryRepository.Verify(
+            r => r.AddAsync(
+                It.Is<OrderStatusHistory>(h =>
+                    h.OrderId == order.Id
+                    && h.FromStatus == OrderStatus.Pending
+                    && h.ToStatus == OrderStatus.Confirmed
+                    && h.ChangedByUserId == changedByUserId
+                    && h.ChangedByRole == Roles.User
+                    && h.ChangedAt != default
+                    && h.Reason == null),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _notificationService.Verify(
+            n => n.NotifyOrderStatusChangedAsync(
+                order.Id,
+                order.OrderNumber,
+                OrderStatus.Pending,
+                OrderStatus.Confirmed,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
+    /// هر وضعیت جدید باید زمان‌نشان مخصوص خود را ثبت کند و بقیه‌ی زمان‌نشان‌ها <c>null</c> بمانند.
+    /// </summary>
+    [Fact]
+    public async Task StatusChange_SetsStateTimestamp()
+    {
+        Product product = CreateProduct(stockQuantity: 10, price: 50m);
+        Order order = CreateOrderWithItem(product, quantity: 1);
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        await _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User);
+
+        Assert.NotNull(order.ConfirmedAt);
+        Assert.Null(order.ShippedAt);
+        Assert.Null(order.DeliveredAt);
+        Assert.Null(order.CancelledAt);
+
+        await _service.UpdateStatusAsync(order.Id, OrderStatus.Shipped, Roles.User);
+
+        Assert.NotNull(order.ShippedAt);
+        Assert.NotNull(order.ConfirmedAt);
+        Assert.Null(order.CancelledAt);
+    }
+
+    /// <summary>
+    /// دلیل لغو باید trim شده در <c>CancelReason</c> سفارش و ردیف تاریخچه ثبت شود.
+    /// </summary>
+    [Fact]
+    public async Task Cancel_SavesReason()
+    {
+        Product product = CreateProduct(stockQuantity: 10, price: 50m);
+        Order order = CreateOrderWithItem(product, quantity: 1, status: OrderStatus.Confirmed);
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        await _service.UpdateStatusAsync(
+            order.Id,
+            OrderStatus.Cancelled,
+            Roles.Admin,
+            reason: "  درخواست مشتری  ");
+
+        Assert.Equal("درخواست مشتری", order.CancelReason);
+        Assert.NotNull(order.CancelledAt);
+        _orderStatusHistoryRepository.Verify(
+            r => r.AddAsync(
+                It.Is<OrderStatusHistory>(h => h.Reason == "درخواست مشتری" && h.ToStatus == OrderStatus.Cancelled),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    /// <summary>
     /// ماتریس کامل گذارهای وضعیت: فقط رو به جلو و تک‌مرحله‌ای به‌علاوه‌ی Cancelled از Pending یا Confirmed مجاز است.
     /// </summary>
     [Theory]
@@ -373,9 +506,9 @@ public class OrderServiceTests
     }
 
     /// <summary>
-    /// یک سفارش در وضعیت Pending با یک ردیف و ناوبری Product پر می‌سازد (مثل خروجی GetByIdWithDetailsAsync).
+    /// یک سفارش با یک ردیف و ناوبری Product پر می‌سازد (مثل خروجی GetByIdWithDetailsAsync).
     /// </summary>
-    private static Order CreateOrderWithItem(Product product, int quantity)
+    private static Order CreateOrderWithItem(Product product, int quantity, OrderStatus status = OrderStatus.Pending)
     {
         DateTime now = DateTime.UtcNow;
         var order = new Order
@@ -383,12 +516,13 @@ public class OrderServiceTests
             Id = Guid.NewGuid(),
             CustomerId = Guid.NewGuid(),
             OrderNumber = $"ORD-{now:yyyyMMdd}-000001",
-            Status = OrderStatus.Pending,
+            Status = status,
             OrderDate = now,
             CreatedAt = now,
             UpdatedAt = now,
             Customer = CreateCustomer(),
-            Items = new List<OrderItem>()
+            Items = new List<OrderItem>(),
+            StatusHistory = new List<OrderStatusHistory>()
         };
 
         order.Items.Add(new OrderItem

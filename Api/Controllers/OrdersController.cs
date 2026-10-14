@@ -107,9 +107,11 @@ public class OrdersController : ControllerBase
     /// یک سفارش را به وضعیت جدید منتقل می‌کند (قواعد forward-only توسط سرویس اعمال می‌شوند).
     /// هر کاربر احرازهویت‌شده می‌تواند سفارش را جلو ببرد؛ لغو آن علاوه بر این به نقش
     /// <c>Admin</c> نیاز دارد، به همین دلیل claim نقش فراخواننده به سرویس منتقل می‌شود.
+    /// شناسه‌ی کاربر فراخواننده هم برای ثبت در تاریخچه‌ی وضعیت ارسال می‌شود و فیلد
+    /// اختیاری <c>reason</c> (فقط برای لغو معنا دارد) دلیل را در تاریخچه و <c>CancelReason</c> می‌نویسد.
     /// </summary>
     /// <param name="id">شناسه‌ی سفارش.</param>
-    /// <param name="request">وضعیت جدید درخواستی.</param>
+    /// <param name="request">وضعیت جدید درخواستی به‌همراه دلیل اختیاری.</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
     /// <returns>سفارش به‌روزرسانی‌شده.</returns>
     /// <response code="200">وضعیت به‌روزرسانی شد.</response>
@@ -135,11 +137,20 @@ public class OrdersController : ControllerBase
         // می‌کند تا گذار Cancelled مخصوص مدیر را مجاز کند.
         string requesterRole = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 
+        // شناسه‌ی کاربر: claim sub در JWT توسط middleware به ClaimTypes.NameIdentifier
+        // نگاشته می‌شود؛ برای ثبت در تاریخچه‌ی وضعیت استفاده می‌شود و نامعتبر بودن آن
+        // مانع گذار نمی‌شود (فقط در تاریخچه null می‌ماند).
+        Guid? changedByUserId = Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out Guid userId)
+            ? userId
+            : null;
+
         OrderDto updated = await _orderService.UpdateStatusAsync(
             id,
             request.NewStatus,
             requesterRole,
-            cancellationToken);
+            cancellationToken,
+            request.Reason,
+            changedByUserId);
 
         return Ok(updated);
     }

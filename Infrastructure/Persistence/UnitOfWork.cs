@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using OrderManagement.Application.Interfaces;
+using OrderManagement.Domain.Entities;
 using OrderManagement.Domain.Repositories;
 
 namespace OrderManagement.Infrastructure.Persistence;
@@ -19,6 +20,7 @@ public class UnitOfWork : IUnitOfWork
     private readonly IProductRepository _products;
     private readonly IOrderRepository _orders;
     private readonly IOrderItemRepository _orderItems;
+    private readonly IRepository<OrderStatusHistory, Guid> _orderStatusHistory;
     private readonly IUserRepository _users;
     private readonly IRefreshTokenRepository _refreshTokens;
 
@@ -33,6 +35,7 @@ public class UnitOfWork : IUnitOfWork
     /// <param name="products">repository محصولات.</param>
     /// <param name="orders">repository سفارش‌ها.</param>
     /// <param name="orderItems">repository ردیف‌های سفارش.</param>
+    /// <param name="orderStatusHistory">repository عمومی تاریخچه‌ی وضعیت سفارش‌ها.</param>
     /// <param name="users">repository کاربران.</param>
     /// <param name="refreshTokens">repository توکن‌های refresh.</param>
     /// <exception cref="ArgumentNullException">وقتی هر آرگومانی برابر <c>null</c> باشد پرتاب می‌شود.</exception>
@@ -43,6 +46,7 @@ public class UnitOfWork : IUnitOfWork
         IProductRepository products,
         IOrderRepository orders,
         IOrderItemRepository orderItems,
+        IRepository<OrderStatusHistory, Guid> orderStatusHistory,
         IUserRepository users,
         IRefreshTokenRepository refreshTokens)
     {
@@ -52,6 +56,7 @@ public class UnitOfWork : IUnitOfWork
         _products = products ?? throw new ArgumentNullException(nameof(products));
         _orders = orders ?? throw new ArgumentNullException(nameof(orders));
         _orderItems = orderItems ?? throw new ArgumentNullException(nameof(orderItems));
+        _orderStatusHistory = orderStatusHistory ?? throw new ArgumentNullException(nameof(orderStatusHistory));
         _users = users ?? throw new ArgumentNullException(nameof(users));
         _refreshTokens = refreshTokens ?? throw new ArgumentNullException(nameof(refreshTokens));
     }
@@ -70,6 +75,9 @@ public class UnitOfWork : IUnitOfWork
 
     /// <inheritdoc />
     public IOrderItemRepository OrderItems => _orderItems;
+
+    /// <inheritdoc />
+    public IRepository<OrderStatusHistory, Guid> OrderStatusHistory => _orderStatusHistory;
 
     /// <inheritdoc />
     public IUserRepository Users => _users;

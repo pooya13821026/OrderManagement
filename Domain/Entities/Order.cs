@@ -59,6 +59,31 @@ public class Order
     public DateTime UpdatedAt { get; set; }
 
     /// <summary>
+    /// زمان‌نشان UTC هنگام تأیید سفارش؛ قبل از تأیید <c>null</c> است.
+    /// </summary>
+    public DateTime? ConfirmedAt { get; set; }
+
+    /// <summary>
+    /// زمان‌نشان UTC هنگام ارسال سفارش؛ قبل از ارسال <c>null</c> است.
+    /// </summary>
+    public DateTime? ShippedAt { get; set; }
+
+    /// <summary>
+    /// زمان‌نشان UTC هنگام تحویل سفارش؛ قبل از تحویل <c>null</c> است.
+    /// </summary>
+    public DateTime? DeliveredAt { get; set; }
+
+    /// <summary>
+    /// زمان‌نشان UTC هنگام لغو سفارش؛ قبل از لغو <c>null</c> است.
+    /// </summary>
+    public DateTime? CancelledAt { get; set; }
+
+    /// <summary>
+    /// دلیل لغو سفارش (حداکثر ۵۰۰ نویسه)؛ فقط هنگام لغو مقدار می‌گیرد و در غیر این صورت <c>null</c> است.
+    /// </summary>
+    public string? CancelReason { get; set; }
+
+    /// <summary>
     /// توکن همزمانی که توسط Entity Framework مدیریت می‌شود. ناهماهنگی آن نشان‌دهنده‌ی تغییر همزمان است.
     /// </summary>
     public byte[] RowVersion { get; set; } = Array.Empty<byte>();
@@ -72,4 +97,10 @@ public class Order
     /// مجموعه‌ی اقلام موجود در این سفارش.
     /// </summary>
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
+
+    /// <summary>
+    /// تاریخچه‌ی تغییرات وضعیت این سفارش (فقط افزودنی؛ هر گذار یک ردیف ثبت می‌شود).
+    /// عضویت‌ها با حذف سفارش آبشاری حذف می‌شوند چون تاریخچه بخشی از همان تراکنش سفارش است.
+    /// </summary>
+    public ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
 }

@@ -13,9 +13,11 @@ namespace OrderManagement.Application.Services;
 
 /// <summary>
 /// پیاده‌سازی چرخه‌ی حیات سفارش: ایجاد با اسنپ‌شات قیمت‌ها و شماره‌های سفارش یکتا،
-/// بازیابی صفحه‌بندی‌شده، گذارهای رو به جلو با اعتبارسنجی موجودی هنگام تأیید،
-/// حذف و ایجاد گروهی با نتیجه‌ی هر سفارش. همه‌ی ذخیره‌سازی از طریق
-/// <see cref="IUnitOfWork"/> انجام می‌شود؛ پیاده‌سازی‌های مشخص در Infrastructure قرار دارند.
+/// بازیابی صفحه‌بندی‌شده، گذارهای رو به جلو با اعتبارسنجی موجودی هنگام تأیید و
+/// بازگرداندن موجودی هنگام لغوِ تأییدشده، ثبت زمان‌نشان وضعیت و ردیف تاریخچه در همان
+/// تراکنش، اطلاع‌رسانی پس از commit، حذف و ایجاد گروهی با نتیجه‌ی هر سفارش. همه‌ی
+/// ذخیره‌سازی از طریق <see cref="IUnitOfWork"/> انجام می‌شود؛ پیاده‌سازی‌های مشخص
+/// در Infrastructure قرار دارند.
 /// </summary>
 public class OrderService : IOrderService
 {
@@ -24,15 +26,24 @@ public class OrderService : IOrderService
     /// </summary>
     private const int OrderNumberGenerationAttempts = 5;
 
+    /// <summary>
+    /// حداکثر طول مجاز دلیل تغییر وضعیت (با <c>Order.CancelReason</c> و ستون Reason تاریخچه یکی است).
+    /// </summary>
+    private const int MaxReasonLength = 500;
+
     private readonly IUnitOfWork _unitOfWork;
+    private readonly INotificationService _notificationService;
 
     /// <summary>
     /// نمونه‌ای جدید از کلاس <see cref="OrderService"/> می‌سازد.
     /// </summary>
     /// <param name="unitOfWork">واحد کاری که برای همه‌ی ذخیره‌سازی‌ها استفاده می‌شود.</param>
-    public OrderService(IUnitOfWork unitOfWork)
+    /// <param name="notificationService">سرویس اطلاع‌رسانی که پس از commit هر گذار وضعیت فراخوانی می‌شود.</param>
+    /// <exception cref="ArgumentNullException">وقتی هر آرگومانی برابر <c>null</c> باشد پرتاب می‌شود.</exception>
+    public OrderService(IUnitOfWork unitOfWork, INotificationService notificationService)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
     }
 
     /// <inheritdoc />
@@ -99,9 +110,17 @@ public class OrderService : IOrderService
         Guid orderId,
         OrderStatus newStatus,
         string requesterRole,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string? reason = null,
+        Guid? changedByUserId = null)
     {
         RequestValidator.EnsureNotEmptyId(orderId, nameof(orderId));
+
+        string? normalizedReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        if (normalizedReason is { Length: > MaxReasonLength })
+        {
+            throw new DomainException($"دلیل تغییر وضعیت نمی‌تواند بیش از {MaxReasonLength} نویسه باشد.");
+        }
 
         Order order = await _unitOfWork.Orders.GetByIdWithDetailsAsync(orderId, cancellationToken)
             ?? throw new EntityNotFoundException(nameof(Order), orderId);
@@ -117,6 +136,11 @@ public class OrderService : IOrderService
             throw new InvalidStatusTransitionException(order.Status, newStatus);
         }
 
+        OrderStatus oldStatus = order.Status;
+        DateTime changedAt = DateTime.UtcNow;
+
+        // وضعیت، موجودی، زمان‌نشان و تاریخچه در یک تراکنش واحد نوشته می‌شوند تا
+        // هیچ‌کدام بدون دیگری متعهد (commit) نشود؛ اطلاع‌رسانی عمداً بعد از این بلوک است.
         await _unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
@@ -124,10 +148,32 @@ public class OrderService : IOrderService
             {
                 await ValidateAndDecrementStockAsync(order, cancellationToken);
             }
+            else if (newStatus == OrderStatus.Cancelled && oldStatus == OrderStatus.Confirmed)
+            {
+                // لغوِ تأییدشده باید دقیقاً همان چیزی را که Confirm کم کرده برگرداند؛
+                // لغو از Pending چون هرگز موجودی کم نشده، کاری با موجودی ندارد.
+                RestoreStock(order, changedAt);
+            }
 
             order.Status = newStatus;
-            order.UpdatedAt = DateTime.UtcNow;
+            order.UpdatedAt = changedAt;
+            ApplyStateTimestamp(order, newStatus, changedAt, normalizedReason);
             _unitOfWork.Orders.Update(order);
+
+            await _unitOfWork.OrderStatusHistory.AddAsync(
+                new OrderStatusHistory
+                {
+                    Id = Guid.NewGuid(),
+                    OrderId = order.Id,
+                    FromStatus = oldStatus,
+                    ToStatus = newStatus,
+                    ChangedAt = changedAt,
+                    ChangedByUserId = changedByUserId,
+                    ChangedByRole = string.IsNullOrWhiteSpace(requesterRole) ? null : requesterRole.Trim(),
+                    Reason = normalizedReason
+                },
+                cancellationToken);
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await _unitOfWork.CommitAsync(cancellationToken);
         }
@@ -136,6 +182,14 @@ public class OrderService : IOrderService
             await _unitOfWork.RollbackAsync(cancellationToken);
             throw;
         }
+
+        // بیرون از تراکنش: شکست اطلاع‌رسانی (لاگ) نباید گذار انجام‌شده را برگرداند.
+        await _notificationService.NotifyOrderStatusChangedAsync(
+            order.Id,
+            order.OrderNumber,
+            oldStatus,
+            newStatus,
+            cancellationToken);
 
         return order.ToDto();
     }
@@ -431,6 +485,55 @@ public class OrderService : IOrderService
             item.Product.StockQuantity -= item.Quantity;
             item.Product.UpdatedAt = DateTime.UtcNow;
             _unitOfWork.Products.Update(item.Product);
+        }
+    }
+
+    /// <summary>
+    /// موجودی همه‌ی اقلام سفارش را دقیقاً به اندازه‌ای که Confirm کم کرده برمی‌گرداند
+    /// (آینه‌ی <see cref="ValidateAndDecrementStockAsync"/>): هر ردیف به همان محصول
+    /// واحدافزوده می‌شود و تغییرات از همان مسیر ذخیره‌ی موجودیت‌ها ثبت می‌شوند.
+    /// </summary>
+    /// <param name="order">سفارش تأییدشده‌ای که لغو می‌شود و اقلامش Product بارگذاری‌شده دارند.</param>
+    /// <param name="changedAt">زمان‌نشان UTC گذار که روی <c>UpdatedAt</c> محصولات ثبت می‌شود.</param>
+    private void RestoreStock(Order order, DateTime changedAt)
+    {
+        foreach (OrderItem item in order.Items)
+        {
+            Product product = item.Product
+                ?? throw new EntityNotFoundException(nameof(Product), item.ProductId);
+
+            product.StockQuantity += item.Quantity;
+            product.UpdatedAt = changedAt;
+            _unitOfWork.Products.Update(product);
+        }
+    }
+
+    /// <summary>
+    /// زمان‌نشان مخصوص وضعیت جدید را روی سفارش ثبت می‌کند
+    /// (<c>ConfirmedAt/ShippedAt/DeliveredAt/CancelledAt</c>) و برای لغو، دلیل را
+    /// (trim شده و خالی به <c>null</c>) در <c>CancelReason</c> می‌نویسد.
+    /// </summary>
+    /// <param name="order">سفارشی که گذار روی آن اعمال می‌شود.</param>
+    /// <param name="newStatus">وضعیت جدید سفارش.</param>
+    /// <param name="changedAt">زمان‌نشان UTC گذار.</param>
+    /// <param name="normalizedReason">دلیل trim‌شده‌ی تغییر یا <c>null</c>.</param>
+    private static void ApplyStateTimestamp(Order order, OrderStatus newStatus, DateTime changedAt, string? normalizedReason)
+    {
+        switch (newStatus)
+        {
+            case OrderStatus.Confirmed:
+                order.ConfirmedAt = changedAt;
+                break;
+            case OrderStatus.Shipped:
+                order.ShippedAt = changedAt;
+                break;
+            case OrderStatus.Delivered:
+                order.DeliveredAt = changedAt;
+                break;
+            case OrderStatus.Cancelled:
+                order.CancelledAt = changedAt;
+                order.CancelReason = normalizedReason;
+                break;
         }
     }
 }

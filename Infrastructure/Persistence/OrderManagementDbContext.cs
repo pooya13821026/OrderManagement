@@ -47,6 +47,11 @@ public class OrderManagementDbContext : DbContext
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
     /// <summary>
+    /// ردیف‌های تاریخچه‌ی تغییر وضعیت سفارش‌ها را دریافت می‌کند.
+    /// </summary>
+    public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
+
+    /// <summary>
     /// حساب‌های کاربری برنامه که برای احراز هویت استفاده می‌شوند را دریافت می‌کند.
     /// </summary>
     public DbSet<ApplicationUser> Users => Set<ApplicationUser>();

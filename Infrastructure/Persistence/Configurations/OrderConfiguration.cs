@@ -6,7 +6,8 @@ namespace OrderManagement.Infrastructure.Persistence.Configurations;
 
 /// <summary>
 /// <see cref="Order"/> را روی جدول <c>Orders</c> نگاشت می‌کند: شماره‌ی سفارش یکتا، ستون
-/// وضعیت byte (tinyint)، مبالغ اعشاری، ایندکس‌های فهرست/فیلتر و نسخه‌ی ردیف.
+/// وضعیت byte (tinyint)، مبالغ اعشاری، زمان‌نشان‌های چرخه‌ی حیات و دلیل لغو،
+/// ایندکس‌های فهرست/فیلتر، نسخه‌ی ردیف و ناوبری تاریخچه‌ی وضعیت.
 /// </summary>
 public class OrderConfiguration : IEntityTypeConfiguration<Order>
 {
@@ -27,6 +28,13 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(order => order.CreatedAt).IsRequired();
         builder.Property(order => order.UpdatedAt).IsRequired();
 
+        // زمان‌نشان‌های اختیاری چرخه‌ی حیات: تا پیش از رخدادِ مربوطه null می‌مانند.
+        builder.Property(order => order.ConfirmedAt);
+        builder.Property(order => order.ShippedAt);
+        builder.Property(order => order.DeliveredAt);
+        builder.Property(order => order.CancelledAt);
+        builder.Property(order => order.CancelReason).HasMaxLength(500);
+
         // شماره‌های سفارش باید در میان همه‌ی سفارش‌ها یکتا باشند.
         builder.HasIndex(order => order.OrderNumber).IsUnique();
 
@@ -45,5 +53,12 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Navigation(order => order.Customer).IsRequired();
+
+        // تاریخچه‌ی وضعیت عضوی از aggregate سفارش است؛ حذف سفارش، ردیف‌های
+        // تاریخچه‌ی آن را هم آبشاری حذف می‌کند تا سفارشی بدون تاریخچه باقی نماند.
+        builder.HasMany(order => order.StatusHistory)
+            .WithOne(history => history.Order)
+            .HasForeignKey(history => history.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -104,9 +104,29 @@ public static class MappingExtensions
     }
 
     /// <summary>
-    /// موجودیت <see cref="Order"/> را به <see cref="OrderDto"/> نگاشت می‌کند، شامل خلاصه‌ی مشتری
-    /// و همه‌ی ردیف‌های سفارش. Customer و Items سفارش (با Product هر ردیف)
-    /// باید قبلاً بارگذاری شده باشند.
+    /// موجودیت <see cref="OrderStatusHistory"/> را به <see cref="OrderStatusHistoryDto"/> نگاشت می‌کند.
+    /// </summary>
+    /// <param name="history">ردیف تاریخچه‌ی تغییر وضعیت که باید نگاشت شود.</param>
+    /// <returns>DTO ردیف تاریخچه.</returns>
+    public static OrderStatusHistoryDto ToDto(this OrderStatusHistory history)
+    {
+        ArgumentNullException.ThrowIfNull(history);
+
+        return new OrderStatusHistoryDto
+        {
+            OrderId = history.OrderId,
+            FromStatus = history.FromStatus,
+            ToStatus = history.ToStatus,
+            ChangedAt = history.ChangedAt,
+            ChangedByRole = history.ChangedByRole,
+            Reason = history.Reason
+        };
+    }
+
+    /// <summary>
+    /// موجودیت <see cref="Order"/> را به <see cref="OrderDto"/> نگاشت می‌کند، شامل خلاصه‌ی مشتری،
+    /// همه‌ی ردیف‌های سفارش، زمان‌نشان‌های وضعیت و تاریخچه‌ی گذارها (مرتب‌شده بر اساس زمان گذار).
+    /// Customer و Items سفارش (با Product هر ردیف) و StatusHistory باید قبلاً بارگذاری شده باشند.
     /// </summary>
     /// <param name="order">موجودیت سفارشی که باید نگاشت شود.</param>
     /// <returns>DTO سفارش.</returns>
@@ -130,7 +150,16 @@ public static class MappingExtensions
             Notes = order.Notes,
             CreatedAt = order.CreatedAt,
             UpdatedAt = order.UpdatedAt,
-            Items = order.Items?.Select(item => item.ToDto()).ToList() ?? new List<OrderItemDto>()
+            ConfirmedAt = order.ConfirmedAt,
+            ShippedAt = order.ShippedAt,
+            DeliveredAt = order.DeliveredAt,
+            CancelledAt = order.CancelledAt,
+            CancelReason = order.CancelReason,
+            Items = order.Items?.Select(item => item.ToDto()).ToList() ?? new List<OrderItemDto>(),
+            StatusHistory = order.StatusHistory?
+                .OrderBy(history => history.ChangedAt)
+                .Select(history => history.ToDto())
+                .ToList() ?? new List<OrderStatusHistoryDto>()
         };
     }
 

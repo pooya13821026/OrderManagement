@@ -31,6 +31,7 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
             .Include(order => order.Customer)
             .Include(order => order.Items)
                 .ThenInclude(item => item.Product)
+            .Include(order => order.StatusHistory)
             .FirstOrDefaultAsync(order => order.Id == id, cancellationToken);
     }
 

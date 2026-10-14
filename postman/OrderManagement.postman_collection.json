@@ -318,7 +318,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"newStatus\": 2\n}",
+              "raw": "{\n  \"newStatus\": 2,\n  \"reason\": \"دلیل تغییر (اختیاری؛ فقط برای لغو استفاده می‌شود)\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

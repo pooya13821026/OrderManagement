@@ -1,3 +1,4 @@
+using OrderManagement.Domain.Entities;
 using OrderManagement.Domain.Repositories;
 
 namespace OrderManagement.Application.Interfaces;
@@ -42,6 +43,12 @@ public interface IUnitOfWork : IDisposable
     /// مخزن موجودیت‌های توکن refresh را برمی‌گرداند.
     /// </summary>
     IRefreshTokenRepository RefreshTokens { get; }
+
+    /// <summary>
+    /// مخزن عمومی ردیف‌های تاریخچه‌ی وضعیت سفارش را برمی‌گرداند (فقط افزودن؛
+    /// تاریخچه append-only است و از قرارداد عمومی برای نوشتن استفاده می‌شود).
+    /// </summary>
+    IRepository<OrderStatusHistory, Guid> OrderStatusHistory { get; }
 
     /// <summary>
     /// همه‌ی تغییرات معلق انجام‌شده از طریق مخزن‌ها را ذخیره می‌کند.

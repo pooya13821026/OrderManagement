@@ -39,18 +39,24 @@ public interface IOrderService
     /// <summary>
     /// سفارش را به وضعیت جدیدی می‌برد و قواعد گذار رو به جلو را اعمال می‌کند.
     /// هنگام تأیید، ابتدا موجودی همه‌ی اقلام اعتبارسنجی و سپس کاهش داده می‌شود؛
-    /// لغو نیازمند نقش <c>Admin</c> است.
+    /// لغو از <c>Confirmed</c> موجودی اقلام را برمی‌گرداند و لغو نیازمند نقش <c>Admin</c> است.
+    /// هر گذار در همان تراکنش، زمان‌نشان وضعیت و یک ردیف تاریخچه ثبت می‌کند و پس از
+    /// commit اطلاع‌رسانی (لاگ) انجام می‌شود.
     /// </summary>
     /// <param name="orderId">شناسه‌ی سفارش.</param>
     /// <param name="newStatus">وضعیت جدید درخواستی.</param>
     /// <param name="requesterRole">نقش کاربر فراخواننده (از claims لایه‌ی API).</param>
     /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
+    /// <param name="reason">دلیل اختیاری تغییر (حداکثر ۵۰۰ نویسه)؛ فقط برای لغو معنا دارد.</param>
+    /// <param name="changedByUserId">شناسه‌ی کاربر فراخواننده برای ثبت در تاریخچه؛ ناموجود <c>null</c>.</param>
     /// <returns>سفارش به‌روزرسانی‌شده به‌صورت DTO.</returns>
     Task<OrderDto> UpdateStatusAsync(
         Guid orderId,
         OrderStatus newStatus,
         string requesterRole,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string? reason = null,
+        Guid? changedByUserId = null);
 
     /// <summary>
     /// پس از بررسی وجود سفارش، آن را حذف می‌کند. بررسی نقش‌ها توسط لایه‌ی API اعمال می‌شود.

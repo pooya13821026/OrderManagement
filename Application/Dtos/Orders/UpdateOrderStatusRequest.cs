@@ -13,4 +13,12 @@ public class UpdateOrderStatusRequest
     /// </summary>
     [Required]
     public OrderStatus NewStatus { get; set; }
+
+    /// <summary>
+    /// دلیل تغییر وضعیت (اختیاری، حداکثر ۵۰۰ نویسه) را می‌گیرد یا تنظیم می‌کند.
+    /// فقط هنگام لغو سفارش (<see cref="OrderStatus.Cancelled"/>) معنا دارد؛ در گذارهای
+    /// دیگر نادیده گرفته می‌شود.
+    /// </summary>
+    [MaxLength(500)]
+    public string? Reason { get; set; }
 }
