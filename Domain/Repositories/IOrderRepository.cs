@@ -17,13 +17,6 @@ public interface IOrderRepository : IRepository<Order, Guid>
     Task<Order?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// سفارش را بر اساس شماره‌ی یکتای آن برمی‌گرداند، یا اگر چنین سفارشی وجود نداشته باشد <c>null</c>.
-    /// </summary>
-    /// <param name="orderNumber">شماره‌ی سفارشی که باید جست‌وجو شود.</param>
-    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
-    Task<Order?> GetByOrderNumberAsync(string orderNumber, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// صفحه‌ای از سفارش‌ها را با فیلترهای اختیاری برای مشتری، وضعیت، بازه‌ی تاریخ و یک عبارت
     /// جست‌وجوی متنی آزاد که روی شماره سفارش و آدرس ارسال تطبیق داده می‌شود، به همراه مرتب‌سازی
     /// قابل پیکربندی برمی‌گرداند.

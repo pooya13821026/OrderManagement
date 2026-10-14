@@ -8,13 +8,6 @@ namespace OrderManagement.Domain.Repositories;
 public interface IProductRepository : IRepository<Product, Guid>
 {
     /// <summary>
-    /// محصول را بر اساس کد SKU یکتایش برمی‌گرداند، یا اگر چنین محصولی وجود نداشته باشد <c>null</c>.
-    /// </summary>
-    /// <param name="sku">کد SKUای که باید جست‌وجو شود.</param>
-    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
-    Task<Product?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// تعیین می‌کند که آیا محصولی با این کد SKU از قبل وجود دارد یا نه.
     /// </summary>
     /// <param name="sku">کد SKUای که باید بررسی شود.</param>

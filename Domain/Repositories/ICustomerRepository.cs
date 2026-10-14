@@ -8,13 +8,6 @@ namespace OrderManagement.Domain.Repositories;
 public interface ICustomerRepository : IRepository<Customer, Guid>
 {
     /// <summary>
-    /// مشتری را بر اساس ایمیل یکتایش برمی‌گرداند، یا اگر چنین مشتری‌ای وجود نداشته باشد <c>null</c>.
-    /// </summary>
-    /// <param name="email">آدرس ایمیلی که باید جست‌وجو شود.</param>
-    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
-    Task<Customer?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// پروفایل مشتری متصل به حساب کاربری داده‌شده را برمی‌گرداند، یا اگر حسابِ بدون پروفایل
     /// (یا شناسه‌ی ناموجود) باشد <c>null</c>. برای کنترل مالکیت سفارش‌ها استفاده می‌شود.
     /// </summary>

@@ -16,13 +16,6 @@ public interface IRefreshTokenRepository : IRepository<RefreshToken, Guid>
     Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// همه‌ی توکن‌های refresh در حال حاضر فعال (ابطال‌نشده، منقضی‌نشده)‌ی یک کاربر را برمی‌گرداند.
-    /// </summary>
-    /// <param name="userId">شناسه‌ی کاربر.</param>
-    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
-    Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// همه‌ی توکن‌های refresh ذخیره‌شده‌ی کاربر داده‌شده را باطل می‌کند.
     /// </summary>
     /// <param name="userId">شناسه‌ی کاربر.</param>

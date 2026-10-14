@@ -8,13 +8,6 @@ namespace OrderManagement.Domain.Repositories;
 public interface ICategoryRepository : IRepository<Category, Guid>
 {
     /// <summary>
-    /// دسته را بر اساس نام یکتایش برمی‌گرداند، یا اگر چنین دسته‌ای وجود نداشته باشد <c>null</c>.
-    /// </summary>
-    /// <param name="name">نامی که باید جست‌وجو شود.</param>
-    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
-    Task<Category?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// تعیین می‌کند که آیا دسته‌ای با این نام از قبل وجود دارد یا نه.
     /// </summary>
     /// <param name="name">نامی که باید بررسی شود.</param>

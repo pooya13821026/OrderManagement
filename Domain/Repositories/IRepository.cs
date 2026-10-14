@@ -18,12 +18,6 @@ public interface IRepository<TEntity, TKey>
     Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// همه‌ی موجودیت‌های این نوع را برمی‌گرداند.
-    /// </summary>
-    /// <param name="cancellationToken">توکنی برای لغو عملیات.</param>
-    Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// موجودیت جدیدی را به واحد کار (unit of work) اضافه می‌کند. تا زمان فراخوانی ذخیره، تغییرات ماندگار نمی‌شوند.
     /// </summary>
     /// <param name="entity">موجودیتی که باید اضافه شود.</param>
