@@ -104,7 +104,7 @@ docker compose up --build
 dotnet test OrderManagement.slnx
 ```
 
-نتیجه موردانتظار: `Passed! - Failed: 0, Passed: 55, Skipped: 0` (تست‌های واحد خالص با xUnit و Moq، بدون دیتابیس).
+نتیجه موردانتظار: `Passed! - Failed: 0, Passed: 70, Skipped: 0` (تست‌های واحد خالص با xUnit و Moq، بدون دیتابیس).
 
 ## دریافت توکن JWT تستی
 
