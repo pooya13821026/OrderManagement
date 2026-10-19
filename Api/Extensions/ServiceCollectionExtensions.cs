@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using OrderManagement.Api.Serialization;
@@ -104,6 +105,34 @@ public static class ServiceCollectionExtensions
                     // [Authorize(Roles = ...)] می‌گوید نقش را از کجا بخواند.
                     RoleClaimType = ClaimTypes.Role
                 };
+
+                // پاسخ‌های ۴۰۱ (چالش) و ۴۰۳ (ممنوعیت) خود چارچوب هم به همان شکل
+                // ProblemDetails بقیه‌ی خطاها نوشته می‌شوند تا قرارداد خطای API برای
+                // مصرف‌کننده یک‌دست بماند و مستندات Swagger با واقعیت بخواند.
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        // پاسخ پیش‌فرض چارچوب (۴۰۱ بدون بدنه) سرکوب می‌شود؛ در عوض بدنه‌ی
+                        // problem+json می‌نویسیم و سربرگ RFC 6750 را خودمان می‌گذاریم.
+                        context.HandleResponse();
+                        context.Response.Headers.WWWAuthenticate =
+                            context.AuthenticateFailure is null ? "Bearer" : "Bearer error=\"invalid_token\"";
+                        await WriteProblemDetailsAsync(
+                            context.HttpContext,
+                            StatusCodes.Status401Unauthorized,
+                            "احراز هویت لازم است",
+                            "هیچ توکن دسترسی معتبری ارائه نشده است.");
+                    },
+
+                    // برای ممنوعیت، چارچوب کد ۴۰۳ را پیش از رویداد ست می‌کند و پس از آن
+                    // کاری نمی‌کند؛ پس فقط بدنه نوشته می‌شود.
+                    OnForbidden = context => WriteProblemDetailsAsync(
+                        context.HttpContext,
+                        StatusCodes.Status403Forbidden,
+                        "عملیات مجاز نیست",
+                        "شما مجوز دسترسی به این منبع را ندارید.")
+                };
             });
 
         services.AddAuthorization();
@@ -133,5 +162,45 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
 
         return services;
+    }
+
+    /// <summary>
+    /// پاسخ RFC 7807 (<c>application/problem+json</c>) هم‌شکل با میان‌افزار خطای سراسری
+    /// می‌نویسد؛ برای ۴۰۱ چالش و ۴۰۳ ممنوعیتی که هرگز به میان‌افزار استثنا نمی‌رسند.
+    /// </summary>
+    /// <param name="context">کانتکست درخواست جاری.</param>
+    /// <param name="statusCode">کد وضعیت HTTP.</param>
+    /// <param name="title">عنوان کوتاه پاسخ مشکل.</param>
+    /// <param name="detail">توضیح قابل نمایش به فراخواننده.</param>
+    /// <returns>تسکی که نشان‌دهنده عملیات ناهمگام است.</returns>
+    private static async Task WriteProblemDetailsAsync(HttpContext context, int statusCode, string title, string detail)
+    {
+        // دفاع در برابر استفاده‌ی آینده: اگر پاسخ قبلاً شروع شده باشد نوشتن دوباره
+        // ممکن نیست؛ مثل میان‌افزار خطا کوتاه می‌شویم تا خرابی بدنه نسازیم.
+        if (context.Response.HasStarted)
+        {
+            return;
+        }
+
+        var problem = new ProblemDetails
+        {
+            Status = statusCode,
+            Title = title,
+            Detail = detail,
+            Instance = context.Request.Path,
+            Type = $"https://httpstatuses.com/{statusCode}"
+        };
+
+        // پاسخ را با ورودی‌های لاگ سمت سرور برای همین درخواست مرتبط می‌کند.
+        problem.Extensions["traceId"] = context.TraceIdentifier;
+
+        context.Response.StatusCode = statusCode;
+
+        // contentType باید صریح پاس داده شود؛ وگرنه WriteAsJsonAsync مقدار پیش‌فرض
+        // application/json را جایگزین problem+json می‌کند.
+        await context.Response.WriteAsJsonAsync(
+            problem,
+            options: null,
+            contentType: "application/problem+json");
     }
 }

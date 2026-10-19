@@ -102,8 +102,13 @@ public class ExceptionHandlingMiddleware
 
         context.Response.Clear();
         context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/problem+json";
-        await context.Response.WriteAsJsonAsync(problem);
+
+        // contentType باید صریح پاس داده شود؛ وگرنه WriteAsJsonAsync مقدار پیش‌فرض
+        // application/json را جایگزین problem+json می‌کند.
+        await context.Response.WriteAsJsonAsync(
+            problem,
+            options: null,
+            contentType: "application/problem+json");
     }
 
     /// <summary>
