@@ -87,11 +87,14 @@ public class CustomerRepository : EfRepository<Customer, Guid>, ICustomerReposit
         // مرتب‌سازی قطعی (نام خانوادگی، سپس ایمیل یکتا به‌عنوان شکننده‌ی تساوی) صفحات را
         // هنگام صفحه‌بندی پایدار نگه می‌دارد - در غیر این صورت ردیف‌ها ممکن است میان
         // درخواست‌های صفحه ظاهر یا ناپدید شوند.
+        // ضرب در long محاسبه و سقف int می‌گیرد تا شماره‌ی صفحه‌ی بزرگ سرریز منفی نکند.
+        int skip = (int)Math.Min((long)(safePageNumber - 1) * safePageSize, int.MaxValue);
+
         IReadOnlyList<Customer> items = await query
             .OrderBy(customer => customer.LastName)
             .ThenBy(customer => customer.FirstName)
             .ThenBy(customer => customer.Email)
-            .Skip((safePageNumber - 1) * safePageSize)
+            .Skip(skip)
             .Take(safePageSize)
             .ToListAsync(cancellationToken);
 

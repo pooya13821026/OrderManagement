@@ -77,10 +77,13 @@ public class CategoryRepository : EfRepository<Category, Guid>, ICategoryReposit
         // مرتب‌سازی قطعی (نام، سپس شناسه یکتا به‌عنوان شکننده‌ی تساوی) صفحات را
         // هنگام صفحه‌بندی پایدار نگه می‌دارد - در غیر این صورت ردیف‌ها ممکن است میان
         // درخواست‌های صفحه ظاهر یا ناپدید شوند.
+        // ضرب در long محاسبه و سقف int می‌گیرد تا شماره‌ی صفحه‌ی بزرگ سرریز منفی نکند.
+        int skip = (int)Math.Min((long)(safePageNumber - 1) * safePageSize, int.MaxValue);
+
         IReadOnlyList<Category> items = await query
             .OrderBy(category => category.Name)
             .ThenBy(category => category.Id)
-            .Skip((safePageNumber - 1) * safePageSize)
+            .Skip(skip)
             .Take(safePageSize)
             .ToListAsync(cancellationToken);
 

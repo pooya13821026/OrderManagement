@@ -61,7 +61,11 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Order> query = Context.Orders.AsNoTracking();
+        // Customer include می‌شود چون نگاشت خروجی از نام مشتری استفاده می‌کند؛
+        // بدون آن CustomerName همیشه خالی می‌ماند.
+        IQueryable<Order> query = Context.Orders
+            .AsNoTracking()
+            .Include(order => order.Customer);
 
         if (customerId.HasValue)
         {
@@ -84,11 +88,16 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
             // مرزی بدون مؤلفه‌ی زمان (یک تاریخ خالص مانند 2026-10-01) کل روز را پوشش
             // می‌دهد، بنابراین «تا 2026-10-01» سفارش‌های ثبت‌شده در همان روز را شامل می‌شود.
             // زمان‌نشان‌های دارای مؤلفه‌ی زمان دقیقاً همان‌طور که داده شده‌اند اعمال می‌شوند.
+            // استثنا: خودِ MaxValue.Date دیگر روزِ بعدی ندارد و AddDays(1) پرتاب می‌کند؛
+            // چون هیچ چیز بعد از آن نمی‌آید، شرط کران بالا اصلاً اضافه نمی‌شود.
             DateTime to = toDate.Value;
-            DateTime upperBound = to == to.Date
-                ? to.Date.AddDays(1).AddTicks(-1)
-                : to;
-            query = query.Where(order => order.OrderDate <= upperBound);
+            if (to != DateTime.MaxValue.Date)
+            {
+                DateTime upperBound = to == to.Date
+                    ? to.Date.AddDays(1).AddTicks(-1)
+                    : to;
+                query = query.Where(order => order.OrderDate <= upperBound);
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -107,8 +116,11 @@ public class OrderRepository : EfRepository<Order, Guid>, IOrderRepository
         int safePageNumber = Math.Max(pageNumber, 1);
         int safePageSize = Math.Max(pageSize, 1);
 
+        // ضرب در long محاسبه و سقف int می‌گیرد تا شماره‌ی صفحه‌ی بزرگ سرریز منفی نکند.
+        int skip = (int)Math.Min((long)(safePageNumber - 1) * safePageSize, int.MaxValue);
+
         IReadOnlyList<Order> items = await query
-            .Skip((safePageNumber - 1) * safePageSize)
+            .Skip(skip)
             .Take(safePageSize)
             .ToListAsync(cancellationToken);
 

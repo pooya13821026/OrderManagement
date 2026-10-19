@@ -96,6 +96,11 @@ public static class RequestValidator
 
         foreach (CreateOrderRequest orderRequest in request.Orders)
         {
+            if (orderRequest is null)
+            {
+                throw new DomainException("سفارش‌های درخواست گروهی نباید null باشند.");
+            }
+
             ValidateOrderRequest(orderRequest);
         }
     }

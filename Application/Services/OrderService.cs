@@ -552,19 +552,16 @@ public class OrderService : IOrderService
         IReadOnlyList<Product> products = await _unitOfWork.Products.GetByIdsAsync(productIds, cancellationToken);
         var productsById = products.ToDictionary(product => product.Id);
 
-        foreach (CreateOrderRequest orderRequest in request.Orders)
+        foreach (var item in request.Orders.SelectMany(orderRequest => orderRequest.Items))
         {
-            foreach (CreateOrderItemRequest item in orderRequest.Items)
+            if (!productsById.TryGetValue(item.ProductId, out Product? product))
             {
-                if (!productsById.TryGetValue(item.ProductId, out Product? product))
-                {
-                    throw new EntityNotFoundException(nameof(Product), item.ProductId);
-                }
+                throw new EntityNotFoundException(nameof(Product), item.ProductId);
+            }
 
-                if (!product.IsActive)
-                {
-                    throw new DomainException($"محصول '{product.Id}' فعال نیست و نمی‌توان آن را سفارش داد.");
-                }
+            if (!product.IsActive)
+            {
+                throw new DomainException($"محصول '{product.Id}' فعال نیست و نمی‌توان آن را سفارش داد.");
             }
         }
 
@@ -572,20 +569,24 @@ public class OrderService : IOrderService
     }
 
     /// <summary>
-    /// ابتدا موجودی همه‌ی اقلام سفارش را اعتبارسنجی و سپس کاهش می‌دهد.
-    /// بررسی همه‌چیز از پیش تضمین می‌کند که کمبود در ردیف بعدی هرگز
-    /// ردیف‌های قبلی را از قبل کاهش‌داده‌شده رها نکند (بدون کاهش جزئی موجودی).
+    /// ابتدا موجودی همه‌ی اقلام سفارش را اعتبارسنجی و سپس کاهش می‌دهد. در اعتبارسنجی،
+    /// تعداد درخواستی ردیف‌های هم‌محصول جمع می‌شود و در برابر موجودی همان محصول بررسی
+    /// می‌گردد تا ردیف‌های تکراری یک محصول با هم از موجودی عبور نکنند. بررسی همه‌چیز
+    /// از پیش تضمین می‌کند که کمبود در ردیف بعدی هرگز ردیف‌های قبلی را از قبل
+    /// کاهش‌داده‌شده رها نکند (بدون کاهش جزئی موجودی).
     /// </summary>
     private async Task ValidateAndDecrementStockAsync(Order order, CancellationToken cancellationToken)
     {
-        foreach (OrderItem item in order.Items)
+        foreach (IGrouping<Guid, OrderItem> group in order.Items.GroupBy(item => item.ProductId))
         {
-            Product product = item.Product
-                ?? throw new EntityNotFoundException(nameof(Product), item.ProductId);
+            OrderItem first = group.First();
+            Product product = first.Product
+                ?? throw new EntityNotFoundException(nameof(Product), group.Key);
 
-            if (product.StockQuantity < item.Quantity)
+            int requiredQuantity = group.Sum(item => item.Quantity);
+            if (product.StockQuantity < requiredQuantity)
             {
-                throw new InsufficientStockException(product.Id, product.StockQuantity, item.Quantity);
+                throw new InsufficientStockException(product.Id, product.StockQuantity, requiredQuantity);
             }
         }
 

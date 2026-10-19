@@ -49,10 +49,19 @@ public class AuthService : IAuthService
         string normalizedEmail = request.Email.Trim();
 
         // نگهبان تکراری به‌صورت best-effort؛ ایندکس یکتای دیتابیس همچنان حافظ
-        // مقتدرانه در برابر ثبت‌نام‌های همزمان است.
+        // مقتدرانه در برابر ثبت‌نام‌های همزمان است. پیام برای هر دو بررسی یکسان و
+        // عمومی است (مثل Login) تا این اندپوینت ناشناس نه بگوید ایمیل در کدام جدول
+        // ثبت شده و نه نوع حساب را فاش کند (ضد user enumeration).
         if (await _unitOfWork.Users.ExistsByEmailAsync(normalizedEmail, cancellationToken))
         {
-            throw new DuplicateEntityException(nameof(ApplicationUser), $"کاربری با ایمیل '{normalizedEmail}' از قبل وجود دارد.");
+            throw new DuplicateEntityException(nameof(ApplicationUser), "ایمیلی با این مشخصات از قبل وجود دارد.");
+        }
+
+        // ایندکس یکتای Customers.Email ایمیل هم‌سان با پروفایل مشتری را با استثنای
+        // دیتابیس (۵۰۰) رد می‌کند؛ همین‌جا زودتر و با همان پیام عمومی بالا (۴۰۹) رد می‌کنیم.
+        if (await _unitOfWork.Customers.ExistsByEmailAsync(normalizedEmail, cancellationToken))
+        {
+            throw new DuplicateEntityException(nameof(Customer), "ایمیلی با این مشخصات از قبل وجود دارد.");
         }
 
         var user = new ApplicationUser

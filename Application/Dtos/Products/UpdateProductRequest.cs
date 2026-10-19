@@ -18,7 +18,7 @@ public class UpdateProductRequest
     /// <summary>
     /// توضیحات اختیاری محصول را می‌گیرد یا تنظیم می‌کند.
     /// </summary>
-    [MaxLength(2000)]
+    [MaxLength(1000)]
     public string? Description { get; set; }
 
     /// <summary>

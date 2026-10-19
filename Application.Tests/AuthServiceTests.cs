@@ -104,6 +104,33 @@ public class AuthServiceTests
     }
 
     /// <summary>
+    /// ثبت‌نام با ایمیلی که از قبل پروفایل مشتری دارد باید DuplicateEntityException بدهد
+    /// (ایندکس یکتای Customers.Email) و هیچ‌چیز ذخیره نشود.
+    /// </summary>
+    [Fact]
+    public async Task RegisterAsync_DuplicateCustomerEmail_ThrowsDuplicate()
+    {
+        const string email = "dup-customer@example.com";
+        _userRepository.Setup(r => r.ExistsByEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        _customerRepository.Setup(r => r.ExistsByEmailAsync(email, It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        var request = new RegisterRequest
+        {
+            Email = email,
+            Password = "Password123!",
+            FirstName = "Ali",
+            LastName = "Rezaei"
+        };
+
+        await Assert.ThrowsAsync<DuplicateEntityException>(() => _service.RegisterAsync(request));
+
+        _userRepository.Verify(r => r.AddAsync(It.IsAny<ApplicationUser>(), It.IsAny<CancellationToken>()), Times.Never);
+        _customerRepository.Verify(r => r.AddAsync(It.IsAny<Customer>(), It.IsAny<CancellationToken>()), Times.Never);
+        _passwordHasher.Verify(h => h.Hash(It.IsAny<string>()), Times.Never);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    /// <summary>
     /// ورود با گذرواژه‌ی اشتباه باید خطای عمومی UnauthorizedOperationException بدهد و جزئیاتی از وجود حساب فاش نکند.
     /// </summary>
     [Fact]

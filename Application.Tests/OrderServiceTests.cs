@@ -183,6 +183,33 @@ public class OrderServiceTests
     }
 
     /// <summary>
+    /// تأیید سفارش با دو ردیف از یک محصول (۳+۳) در برابر موجودی ۵ باید InsufficientStockException بدهد؛
+    /// تعداد درخواستیِ ردیف‌های هم‌محصول جمع می‌شود و موجودی دست‌نخورده می‌ماند (بدون کاهش جزئی).
+    /// </summary>
+    [Fact]
+    public async Task UpdateStatusAsync_ConfirmWithDuplicateProductLines_ThrowsInsufficientStock()
+    {
+        Product product = CreateProduct(stockQuantity: 5, price: 50m);
+        Order order = CreateOrderWithTwoLinesOfSameProduct(product, firstQuantity: 3, secondQuantity: 3);
+        Guid ownerId = Guid.NewGuid();
+        order.Customer.UserId = ownerId;
+        _orderRepository.Setup(r => r.GetByIdWithDetailsAsync(order.Id, It.IsAny<CancellationToken>())).ReturnsAsync(order);
+
+        InsufficientStockException exception = await Assert.ThrowsAsync<InsufficientStockException>(
+            () => _service.UpdateStatusAsync(order.Id, OrderStatus.Confirmed, Roles.User, changedByUserId: ownerId));
+
+        Assert.Equal(product.Id, exception.ProductId);
+        Assert.Equal(5, exception.Available);
+        Assert.Equal(6, exception.Requested);
+        Assert.Equal(5, product.StockQuantity);
+        Assert.Equal(OrderStatus.Pending, order.Status);
+        _productRepository.Verify(r => r.Update(It.IsAny<Product>()), Times.Never);
+        _orderRepository.Verify(r => r.Update(It.IsAny<Order>()), Times.Never);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _unitOfWork.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    /// <summary>
     /// پرش از یک مرحله (Pending به Shipped) باید InvalidStatusTransitionException پرتاب کند.
     /// </summary>
     [Fact]
@@ -730,6 +757,26 @@ public class OrderServiceTests
             Quantity = quantity,
             UnitPrice = product.Price,
             CreatedAt = now,
+            Product = product
+        });
+
+        return order;
+    }
+
+    /// <summary>
+    /// سفارشی با دو ردیف از یک نمونه‌ی واحد محصول می‌سازد (تداخل دو ردیف هم‌محصول).
+    /// </summary>
+    private static Order CreateOrderWithTwoLinesOfSameProduct(Product product, int firstQuantity, int secondQuantity)
+    {
+        Order order = CreateOrderWithItem(product, firstQuantity);
+        order.Items.Add(new OrderItem
+        {
+            Id = Guid.NewGuid(),
+            OrderId = order.Id,
+            ProductId = product.Id,
+            Quantity = secondQuantity,
+            UnitPrice = product.Price,
+            CreatedAt = DateTime.UtcNow,
             Product = product
         });
 

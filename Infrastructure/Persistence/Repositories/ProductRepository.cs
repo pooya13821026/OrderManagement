@@ -21,6 +21,15 @@ public class ProductRepository : EfRepository<Product, Guid>, IProductRepository
     }
 
     /// <inheritdoc />
+    public override async Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        // عمداً tracked مثل پایه: نتیجه ممکن است بعداً تغییر و ذخیره شود.
+        return await Context.Products
+            .Include(product => product.Category)
+            .FirstOrDefaultAsync(product => product.Id == id, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<Product?> GetBySkuAsync(string sku, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(sku))
@@ -54,7 +63,11 @@ public class ProductRepository : EfRepository<Product, Guid>, IProductRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<Product> query = Context.Products.AsNoTracking();
+        // Category include می‌شود چون نگاشت خروجی از نام دسته استفاده می‌کند؛
+        // بدون آن CategoryName همیشه خالی می‌ماند.
+        IQueryable<Product> query = Context.Products
+            .AsNoTracking()
+            .Include(product => product.Category);
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -79,10 +92,13 @@ public class ProductRepository : EfRepository<Product, Guid>, IProductRepository
         int safePageNumber = Math.Max(pageNumber, 1);
         int safePageSize = Math.Max(pageSize, 1);
 
+        // ضرب در long محاسبه و سقف int می‌گیرد تا شماره‌ی صفحه‌ی بزرگ سرریز منفی نکند.
+        int skip = (int)Math.Min((long)(safePageNumber - 1) * safePageSize, int.MaxValue);
+
         IReadOnlyList<Product> items = await query
             .OrderBy(product => product.Name)
             .ThenBy(product => product.Sku)
-            .Skip((safePageNumber - 1) * safePageSize)
+            .Skip(skip)
             .Take(safePageSize)
             .ToListAsync(cancellationToken);
 

@@ -20,6 +20,12 @@ public class PaginationParams
     public const int MaxPageSize = 100;
 
     /// <summary>
+    /// کران بالای <see cref="PageNumber"/>. شماره‌های بالاتر از این مقدار، محدود می‌شوند تا
+    /// ضرب شماره‌ی صفحه در اندازه‌ی صفحه هنگام Skip سرریز عددی نکند.
+    /// </summary>
+    public const int MaxPageNumber = 1_000_000;
+
+    /// <summary>
     /// شماره‌ی صفحه که از ۱ شروع می‌شود را می‌گیرد یا تنظیم می‌کند. مقدار پیش‌فرض ۱ است.
     /// </summary>
     [Range(1, int.MaxValue)]
@@ -34,13 +40,17 @@ public class PaginationParams
 
     /// <summary>
     /// <see cref="PageNumber"/> و <see cref="PageSize"/> را در محدوده‌های معتبر محدود می‌کند:
-    /// شماره‌ی صفحه حداقل ۱، اندازه‌ی صفحه بین ۱ و <see cref="MaxPageSize"/>.
+    /// شماره‌ی صفحه بین ۱ و <see cref="MaxPageNumber"/>، اندازه‌ی صفحه بین ۱ و <see cref="MaxPageSize"/>.
     /// </summary>
     public void Normalize()
     {
         if (PageNumber < 1)
         {
             PageNumber = 1;
+        }
+        else if (PageNumber > MaxPageNumber)
+        {
+            PageNumber = MaxPageNumber;
         }
 
         if (PageSize < 1)
