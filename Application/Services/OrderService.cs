@@ -450,20 +450,17 @@ public class OrderService : IOrderService
         };
 
         decimal totalAmount = 0;
-        foreach (CreateOrderItemRequest itemRequest in request.Items)
+        foreach (var orderItem in from itemRequest in request.Items let product = productsById[itemRequest.ProductId] select new OrderItem
+                 {
+                     Id = Guid.NewGuid(),
+                     OrderId = order.Id,
+                     ProductId = product.Id,
+                     Quantity = itemRequest.Quantity,
+                     UnitPrice = product.Price,
+                     CreatedAt = now,
+                     Product = product
+                 })
         {
-            Product product = productsById[itemRequest.ProductId];
-            var orderItem = new OrderItem
-            {
-                Id = Guid.NewGuid(),
-                OrderId = order.Id,
-                ProductId = product.Id,
-                Quantity = itemRequest.Quantity,
-                UnitPrice = product.Price,
-                CreatedAt = now,
-                Product = product
-            };
-
             totalAmount += orderItem.LineTotal;
             order.Items.Add(orderItem);
         }
